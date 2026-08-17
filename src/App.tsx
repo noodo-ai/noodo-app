@@ -5,7 +5,7 @@ import {
   BookOpen,
   Bot,
   Check,
-  ChefHat,
+  CookingPot,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -14,6 +14,7 @@ import {
   Globe2,
   Lightbulb,
   LineSquiggle,
+  LoaderPinwheel,
   MonitorUp,
   PanelLeft,
   PanelLeftClose,
@@ -27,6 +28,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   WandSparkles,
+  Wheat,
   X,
 } from 'lucide-react'
 
@@ -35,9 +37,9 @@ type Mode = 'Quick Run' | 'Deep Think' | 'Create'
 type RightPanelView = 'farm' | 'process' | 'cooking'
 
 const panelViews: Array<{ id: RightPanelView; label: string; Icon: IconType; description: string }> = [
-  { id: 'farm', label: 'Farm', Icon: Bot, description: 'Bring agents into one calm, coordinated workspace.' },
-  { id: 'process', label: 'Process', Icon: SlidersHorizontal, description: 'Shape how work runs with skills, rules, and MCP.' },
-  { id: 'cooking', label: 'Cooking', Icon: ChefHat, description: 'Follow live tasks, execution stages, and reasoning summaries.' },
+  { id: 'farm', label: 'Farm', Icon: Wheat, description: 'Bring agents into one calm, coordinated workspace.' },
+  { id: 'process', label: 'Process', Icon: LoaderPinwheel, description: 'Shape how work runs with skills, rules, and MCP.' },
+  { id: 'cooking', label: 'Cooking', Icon: CookingPot, description: 'Follow live tasks, execution stages, and reasoning summaries.' },
 ]
 
 const capabilities: Array<[string, IconType, string]> = [
@@ -303,6 +305,7 @@ function Composer({ value, onChange, onSubmit, mode, setMode, compact = false }:
 
 const EXPLORE_STAGE_ONE = 130
 const EXPLORE_MAX = 780
+const BACK_TO_TOP_THRESHOLD = EXPLORE_STAGE_ONE + 240
 
 function InspirationDrawer({ progress, setProgress, onPick }: { progress: number; setProgress: (value: number) => void; onPick: (text: string) => void }) {
   const dragStart = useRef<number | null>(null)
@@ -495,7 +498,7 @@ function App() {
             >© 2026 Noodo Labs <span>·</span> Privacy <span>·</span> Terms</footer>
             <InspirationDrawer progress={exploreProgress} setProgress={setExploreProgress} onPick={pickPrompt} />
             <button
-              className={`back-to-top ${exploreProgress > EXPLORE_STAGE_ONE + 50 ? 'visible' : ''}`}
+              className={`back-to-top ${exploreProgress > BACK_TO_TOP_THRESHOLD ? 'visible' : ''}`}
               onClick={() => setExploreProgress(0)}
               aria-label="Back to top"
             >
