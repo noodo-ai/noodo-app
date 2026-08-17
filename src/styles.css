@@ -82,13 +82,40 @@ button { color: inherit; }
 .sidebar.expanded { width: 240px; }
 .sidebar-head { position: relative; display: flex; align-items: center; height: 54px; padding: 7px; }
 .brand-button, .icon-button, .nav-item, .profile { border: 0; background: transparent; cursor: pointer; }
-.sidebar .brand-button { cursor: default; }
 .brand-button[data-tooltip], .profile[data-tooltip], .icon-button[data-tooltip] { position: relative; }
 .brand-button { display: flex; align-items: center; gap: 10px; min-width: 38px; height: 38px; padding: 0 8px; overflow: hidden; border-radius: 11px; color: var(--text-strong); }
 .sidebar.expanded .sidebar-head > .brand-button { max-width: calc(100% - 52px); }
-.mobile-head .brand-button:hover, .icon-button:hover { background: var(--hover); }
-.brand-button span { font-family: var(--font-brand); font-weight: 700; letter-spacing: .1em; }
+.brand-button:hover, .brand-button:focus-visible, .icon-button:hover { background: var(--hover); }
+.noodo-mark-target { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.noodo-brand-label { flex: 0 0 auto; font-family: var(--font-brand); font-weight: 700; letter-spacing: .1em; }
 .noodo-mark { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.noodo-mark-glint {
+  stroke: rgba(255, 255, 255, .96);
+  stroke-width: 2.1;
+  stroke-dasharray: 12 100;
+  stroke-dashoffset: 12;
+  opacity: 0;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, .42));
+  pointer-events: none;
+}
+.noodo-mark.glint-forward .noodo-mark-glint {
+  animation: noodo-mark-glint-forward 820ms cubic-bezier(.4, 0, .2, 1) both;
+}
+.noodo-mark.glint-reverse .noodo-mark-glint {
+  animation: noodo-mark-glint-reverse 820ms cubic-bezier(.4, 0, .2, 1) both;
+}
+@keyframes noodo-mark-glint-forward {
+  0% { stroke-dashoffset: 12; opacity: 0; }
+  12% { opacity: .9; }
+  78% { opacity: .9; }
+  100% { stroke-dashoffset: -100; opacity: 0; }
+}
+@keyframes noodo-mark-glint-reverse {
+  0% { stroke-dashoffset: -100; opacity: 0; }
+  12% { opacity: .9; }
+  78% { opacity: .9; }
+  100% { stroke-dashoffset: 12; opacity: 0; }
+}
 .icon-button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 10px; color: var(--text-muted); }
 .collapse { position: absolute; right: 7px; flex: 0 0 auto; opacity: 0; }
 .panel-icon { display: grid; place-items: center; grid-area: 1 / 1; transition: opacity 140ms ease-out, transform 160ms ease-out; }
@@ -123,14 +150,14 @@ button { color: inherit; }
 .nav-item > svg { flex: 0 0 auto; transition: transform var(--ease); }
 .profile { overflow: hidden; }
 .new-chat > span, .new-chat kbd,
-.brand-button > span, .nav-item > span, .profile-name {
+.noodo-brand-label, .nav-item > span, .profile-name {
   flex: 0 0 auto;
   opacity: 0;
   visibility: hidden;
   transition: opacity 100ms ease-out, visibility 0s linear 100ms;
 }
 .sidebar.expanded .new-chat > span, .sidebar.expanded .new-chat kbd,
-.sidebar.expanded .brand-button > span,
+.sidebar.expanded .noodo-brand-label,
 .sidebar.expanded .nav-item > span,
 .sidebar.expanded .profile-name {
   opacity: 1;
@@ -160,6 +187,8 @@ button { color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .noodo-mark.glint-forward .noodo-mark-glint,
+  .noodo-mark.glint-reverse .noodo-mark-glint { animation: none; }
   .nav-item > svg { transition: none; }
   .nav-item-farm:hover > svg, .nav-item-farm:focus-visible > svg,
   .nav-item-process:hover > svg, .nav-item-process:focus-visible > svg,
