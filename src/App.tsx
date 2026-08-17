@@ -61,9 +61,9 @@ function NoodoMark() {
   return <LineSquiggle className="noodo-mark" strokeWidth={1.65} aria-hidden="true" />
 }
 
-function NavItem({ label, Icon, active, onClick }: { label: string; Icon: IconType; active: boolean; onClick: () => void }) {
+function NavItem({ id, label, Icon, active, onClick }: { id: RightPanelView; label: string; Icon: IconType; active: boolean; onClick: () => void }) {
   return (
-    <button className={`nav-item ${active ? 'active' : ''}`} aria-label={label} data-tooltip={label} aria-pressed={active} onClick={onClick}>
+    <button className={`nav-item nav-item-${id} ${active ? 'active' : ''}`} aria-label={label} data-tooltip={label} aria-pressed={active} onClick={onClick}>
       <Icon size={18} strokeWidth={1.65} />
       <span>{label}</span>
     </button>
@@ -114,7 +114,7 @@ function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset, active
 
         <nav className="nav-group" aria-label="Primary navigation">
           {panelViews.map(({ id, label, Icon }) => (
-            <NavItem key={id} label={label} Icon={Icon} active={activePanel === id} onClick={() => onSelectPanel(id)} />
+            <NavItem key={id} id={id} label={label} Icon={Icon} active={activePanel === id} onClick={() => onSelectPanel(id)} />
           ))}
         </nav>
       </div>
