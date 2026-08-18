@@ -36,6 +36,17 @@ export interface ProcessGroup {
   items: ProcessConfigItem[]
 }
 
+export type AgentOutcomeStatus = 'ready' | 'working' | 'paused'
+
+export interface AgentOutcome {
+  id: string
+  name: string
+  specialty: string
+  completed: number
+  score: number
+  status: AgentOutcomeStatus
+}
+
 export const panelViews: PanelViewDefinition[] = [
   { id: 'farm', label: 'Farm', Icon: Wheat, description: 'Bring agents into one calm, coordinated workspace.' },
   { id: 'process', label: 'Process', Icon: LoaderPinwheel, description: 'Shape how work runs with skills, rules, and MCP.' },
@@ -94,8 +105,29 @@ export const processGroups: ProcessGroup[] = [
   },
 ]
 
-export const agentOutcomes = [
-  { name: 'Product researcher', completed: 42, score: 94, metrics: [['Research', 96], ['Synthesis', 93], ['Sources', 91]] },
-  { name: 'Interface designer', completed: 28, score: 88, metrics: [['Structure', 91], ['Clarity', 89], ['Polish', 84]] },
-  { name: 'Workflow operator', completed: 35, score: 76, metrics: [['Planning', 81], ['Execution', 78], ['Follow-through', 69]] },
-] as const
+const outcomeProfiles: Array<Omit<AgentOutcome, 'id' | 'completed' | 'score'>> = [
+  { name: 'Product researcher', specialty: 'Research', status: 'ready' },
+  { name: 'Interface designer', specialty: 'Design', status: 'working' },
+  { name: 'Workflow operator', specialty: 'Operations', status: 'ready' },
+  { name: 'Strategy analyst', specialty: 'Analysis', status: 'paused' },
+  { name: 'Technical writer', specialty: 'Writing', status: 'ready' },
+  { name: 'Quality engineer', specialty: 'Quality', status: 'working' },
+  { name: 'Systems mapper', specialty: 'Mapping', status: 'ready' },
+  { name: 'Product planner', specialty: 'Planning', status: 'paused' },
+  { name: 'Implementation lead', specialty: 'Engineering', status: 'working' },
+  { name: 'Delivery reviewer', specialty: 'Review', status: 'ready' },
+  { name: 'Customer scout', specialty: 'Discovery', status: 'working' },
+  { name: 'Knowledge guide', specialty: 'Guidance', status: 'ready' },
+]
+
+export const agentOutcomes: AgentOutcome[] = Array.from({ length: 72 }, (_, index) => {
+  const profile = outcomeProfiles[index % outcomeProfiles.length]
+  const cohort = Math.floor(index / outcomeProfiles.length) + 1
+  return {
+    ...profile,
+    id: `outcome-${index + 1}`,
+    name: `${profile.name} ${String(cohort).padStart(2, '0')}`,
+    completed: 18 + ((index * 11) % 59),
+    score: 67 + ((index * 7) % 31),
+  }
+})
