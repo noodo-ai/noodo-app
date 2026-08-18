@@ -168,7 +168,13 @@ button { color: inherit; }
 .new-chat:hover, .nav-item:hover { background: var(--hover); color: var(--text); }
 .nav-item-farm:hover > svg, .nav-item-farm:focus-visible > svg { transform: rotate(-90deg); }
 .nav-item-process:hover > svg, .nav-item-process:focus-visible > svg { transform: rotate(90deg); }
-.nav-item-cooking:hover > svg, .nav-item-cooking:focus-visible > svg { transform: scaleX(-1); }
+.nav-item-cooking:hover > svg, .nav-item-cooking:focus-visible > svg { animation: nav-icon-bounce 300ms ease-in-out; }
+.nav-item-slurp:hover > svg, .nav-item-slurp:focus-visible > svg { transform: scaleX(-1); }
+@keyframes nav-icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-3px); }
+  70% { transform: translateY(2px); }
+}
 .nav-item.active { border-color: var(--line); background: var(--hover); color: var(--text-strong); }
 .new-chat kbd { margin-left: auto; padding: 3px 7px; border: 1px solid var(--line); border-radius: 7px; color: var(--text-faint); font: 11px inherit; }
 .nav-group { display: grid; gap: 2px; }
@@ -193,7 +199,8 @@ button { color: inherit; }
   .nav-item > svg { transition: none; }
   .nav-item-farm:hover > svg, .nav-item-farm:focus-visible > svg,
   .nav-item-process:hover > svg, .nav-item-process:focus-visible > svg,
-  .nav-item-cooking:hover > svg, .nav-item-cooking:focus-visible > svg { transform: none; }
+  .nav-item-cooking:hover > svg, .nav-item-cooking:focus-visible > svg,
+  .nav-item-slurp:hover > svg, .nav-item-slurp:focus-visible > svg { animation: none; transform: none; }
 }
 .sidebar:not(.expanded) [data-tooltip]::after {
   position: absolute;
