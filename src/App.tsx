@@ -25,6 +25,7 @@ import {
   Search,
   Settings,
   SlidersHorizontal,
+  Soup,
   Sparkles,
   WandSparkles,
   Wheat,
@@ -33,12 +34,34 @@ import {
 
 type IconType = typeof Sparkles
 type Mode = 'Quick Run' | 'Deep Think' | 'Create'
-type RightPanelView = 'farm' | 'process' | 'cooking'
+type RightPanelView = 'farm' | 'process' | 'cooking' | 'slurp'
 
 const panelViews: Array<{ id: RightPanelView; label: string; Icon: IconType; description: string }> = [
   { id: 'farm', label: 'Farm', Icon: Wheat, description: 'Bring agents into one calm, coordinated workspace.' },
   { id: 'process', label: 'Process', Icon: LoaderPinwheel, description: 'Shape how work runs with skills, rules, and MCP.' },
   { id: 'cooking', label: 'Cooking', Icon: CookingPot, description: 'Follow live tasks, execution stages, and reasoning summaries.' },
+  { id: 'slurp', label: 'Slurp', Icon: Soup, description: 'Review completed work signals and agent capability levels.' },
+]
+
+const agentOutcomes = [
+  { name: 'Product researcher', completed: 42, score: 94, metrics: [['Research', 96], ['Synthesis', 93], ['Sources', 91]] },
+  { name: 'Interface designer', completed: 28, score: 88, metrics: [['Structure', 91], ['Clarity', 89], ['Polish', 84]] },
+  { name: 'Workflow operator', completed: 35, score: 76, metrics: [['Planning', 81], ['Execution', 78], ['Follow-through', 69]] },
+] as const
+
+const farmAgents: Array<{ name: string; Icon: IconType; status: 'ready' | 'working' }> = [
+  { name: 'Scout', Icon: Search, status: 'ready' },
+  { name: 'Maker', Icon: MonitorUp, status: 'working' },
+  { name: 'Planner', Icon: BarChart3, status: 'ready' },
+  { name: 'Editor', Icon: FileText, status: 'ready' },
+  { name: 'Analyst', Icon: Bot, status: 'working' },
+  { name: 'Writer', Icon: BookOpen, status: 'ready' },
+  { name: 'Coder', Icon: SlidersHorizontal, status: 'working' },
+  { name: 'Reviewer', Icon: Check, status: 'ready' },
+  { name: 'Mapper', Icon: Globe2, status: 'ready' },
+  { name: 'Tester', Icon: Sparkles, status: 'working' },
+  { name: 'Runner', Icon: CookingPot, status: 'ready' },
+  { name: 'Guide', Icon: Lightbulb, status: 'ready' },
 ]
 
 const capabilities: Array<[string, IconType, string]> = [
@@ -177,14 +200,20 @@ function PanelOverview({ onSelect }: { onSelect: (panel: RightPanelView) => void
 function FarmPanel() {
   return (
     <div className="panel-content">
-      <p className="panel-eyebrow">Farm</p>
       <h2>Agents, ready when you are.</h2>
       <p className="panel-intro">Connect specialist agents and decide who joins each task.</p>
       <div className="agent-list">
-        <div className="agent-row"><span className="agent-avatar"><Bot size={17} /></span><span><strong>Product researcher</strong><small>Research and synthesis</small></span><i className="online-dot" /></div>
-        <div className="agent-row"><span className="agent-avatar"><MonitorUp size={17} /></span><span><strong>Interface designer</strong><small>Flows and product UI</small></span><i className="online-dot" /></div>
-        <button className="panel-secondary"><Plus size={16} />Connect agent</button>
+        {farmAgents.map(({ name, Icon, status }) => (
+          <button className="agent-row" key={name} aria-label={`${name}, ${status}`}>
+            <span className="agent-row-content">
+              <span className="agent-avatar"><Icon size={16} /></span>
+              <strong>{name}</strong>
+              <i className={`online-dot ${status}`} aria-hidden="true" />
+            </span>
+          </button>
+        ))}
       </div>
+      <button className="panel-secondary farm-connect"><Plus size={16} />Connect agent</button>
     </div>
   )
 }
@@ -198,7 +227,6 @@ function ProcessPanel() {
 
   return (
     <div className="panel-content">
-      <p className="panel-eyebrow">Process</p>
       <h2>Define how work gets done.</h2>
       <p className="panel-intro">Keep capabilities, guidance, and connections in one place.</p>
       <div className="process-list">
@@ -213,7 +241,6 @@ function ProcessPanel() {
 function CookingPanel({ hasTask }: { hasTask: boolean }) {
   return (
     <div className="panel-content">
-      <p className="panel-eyebrow">Cooking</p>
       <h2>{hasTask ? 'Work in motion.' : 'Nothing cooking yet.'}</h2>
       <p className="panel-intro">Track execution stages and concise reasoning summaries as agents work.</p>
       <div className="task-timeline">
@@ -221,6 +248,33 @@ function CookingPanel({ hasTask }: { hasTask: boolean }) {
         <div className={hasTask ? 'active' : ''}><i /><span><strong>Plan the approach</strong><small>{hasTask ? 'Choosing tools and next actions' : 'Starts after a request'}</small></span></div>
         <div><i /><span><strong>Deliver the result</strong><small>Review and final response</small></span></div>
       </div>
+    </div>
+  )
+}
+
+function SlurpPanel() {
+  return (
+    <div className="panel-content">
+      <h2>Capability, proven in output.</h2>
+      <p className="panel-intro">Consume quality signals from completed work to see where each agent is strongest.</p>
+      <div className="slurp-summary" aria-label="Completed agent work summary">
+        <span><strong>105</strong><small>completed runs</small></span>
+        <span><strong>86</strong><small>team capability</small></span>
+      </div>
+      <ul className="agent-outcome-list" aria-label="Agent capability comparison">
+        {agentOutcomes.map(({ name, completed, score, metrics }) => (
+          <li className="agent-outcome" key={name}>
+            <div className="agent-outcome-head">
+              <span><strong>{name}</strong><small>{completed} completed runs</small></span>
+              <b>{score}</b>
+            </div>
+            <div className="outcome-meter" aria-label={`${name} overall capability: ${score} out of 100`}><i style={{ width: `${score}%` }} /></div>
+            <div className="outcome-metrics">
+              {metrics.map(([label, value]) => <span key={label}>{label}<b>{value}</b></span>)}
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -246,6 +300,7 @@ function RightPanel({ open, activeView, onSelect, onClose, hasTask }: {
         {activeView === 'farm' && <FarmPanel />}
         {activeView === 'process' && <ProcessPanel />}
         {activeView === 'cooking' && <CookingPanel hasTask={hasTask} />}
+        {activeView === 'slurp' && <SlurpPanel />}
       </div>
     </aside>
   )
