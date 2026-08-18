@@ -342,13 +342,13 @@ button { color: inherit; }
 .panel-step:focus-visible { box-shadow: 0 0 0 2px rgba(168, 186, 195, .08); }
 .step-number { align-self: start; padding-top: 4px; color: var(--text-faint); font-size: 10px; font-variant-numeric: tabular-nums; }
 .step-icon, .process-icon, .agent-avatar { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.025); color: var(--text-muted); }
-.step-copy, .process-list button > span:nth-child(2), .task-timeline span { display: grid; gap: 5px; min-width: 0; }
-.step-copy strong, .process-list strong, .task-timeline strong { color: var(--text); font-size: 13px; font-weight: 560; }
-.step-copy small, .process-list small, .task-timeline small { color: var(--text-faint); font-size: 11px; line-height: 1.45; }
+.step-copy, .task-timeline span { display: grid; gap: 5px; min-width: 0; }
+.step-copy strong, .task-timeline strong { color: var(--text); font-size: 13px; font-weight: 560; }
+.step-copy small, .task-timeline small { color: var(--text-faint); font-size: 11px; line-height: 1.45; }
 .step-arrow { color: var(--text-faint); transition: transform var(--ease), color var(--ease); }
 .panel-step:hover .step-arrow, .panel-step:focus-visible .step-arrow { color: var(--text-muted); transform: translateX(5px); }
 
-.process-list, .task-timeline { display: grid; gap: 8px; }
+.task-timeline { display: grid; gap: 8px; }
 .agent-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .agent-row { display: flex; align-items: center; justify-content: center; width: fit-content; min-height: 46px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; transition: background var(--ease), border-color var(--ease), color var(--ease), transform var(--ease), box-shadow var(--ease); }
 .agent-row:hover, .agent-row:focus-visible { transform: translateY(-1px); border-color: var(--line-strong); background: var(--hover); outline: 0; }
@@ -364,11 +364,47 @@ button { color: inherit; }
 .panel-secondary:focus-visible { box-shadow: 0 0 0 2px rgba(168, 186, 195, .08); }
 .panel-secondary:disabled { cursor: not-allowed; opacity: .45; transform: none; }
 .panel-secondary:disabled:hover { border-color: var(--line); background: rgba(255,255,255,.025); color: var(--text-muted); }
-.process-list button { display: grid; grid-template-columns: 36px minmax(0, 1fr) 16px; align-items: center; gap: 11px; width: 100%; min-height: 62px; padding: 10px; border: 0; border-bottom: 1px solid var(--line); border-radius: 10px; background: transparent; color: inherit; text-align: left; cursor: pointer; transition: background var(--ease), color var(--ease), box-shadow var(--ease); }
-.process-list button:hover, .process-list button:focus-visible { background: var(--hover); outline: 0; }
-.process-list button:focus-visible { box-shadow: inset 0 0 0 1px var(--line-strong); }
-.process-list button > svg { color: var(--text-faint); transition: color var(--ease), transform var(--ease); }
-.process-list button:hover > svg, .process-list button:focus-visible > svg { color: var(--text-muted); transform: translateX(3px); }
+.process-group-controls { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.process-group-tabs { display: grid; width: fit-content; grid-template-columns: repeat(3, auto); gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.018); }
+.process-group-tabs button { min-width: 0; height: 32px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 11px; transition: background var(--ease), color var(--ease), box-shadow var(--ease); }
+.process-group-tabs button:hover, .process-group-tabs button:focus-visible { background: var(--hover); color: var(--text); outline: 0; }
+.process-group-tabs button:focus-visible { box-shadow: 0 0 0 2px rgba(168, 186, 195, .08); }
+.process-group-tabs button.selected { background: rgba(255,255,255,.09); color: var(--text); }
+.process-new-item { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 9px; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.018); color: var(--text-muted); cursor: pointer; font-size: 11px; transition: background var(--ease), border-color var(--ease), color var(--ease), box-shadow var(--ease); }
+.process-new-item:hover, .process-new-item:focus-visible { border-color: var(--line-strong); background: var(--hover); color: var(--text); outline: 0; }
+.process-new-item:focus-visible { box-shadow: 0 0 0 2px rgba(168, 186, 195, .08); }
+.process-config-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.process-config-item { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.012); transition: border-color var(--ease), background var(--ease); }
+.process-config-item:hover { border-color: transparent; background: var(--hover); }
+.process-config-item.disabled { opacity: .66; }
+.process-item-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 68px; padding: 11px; }
+.process-item-summary > span { display: grid; gap: 5px; min-width: 0; }
+.process-item-summary strong { overflow: hidden; color: var(--text); font-size: 12px; font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
+.process-item-summary small { overflow: hidden; color: var(--text-faint); font-size: 10px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.process-item-actions { display: flex; align-items: center; gap: 5px; }
+.process-toggle { position: relative; width: 30px; height: 18px; padding: 0; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.06); cursor: pointer; transition: background var(--ease), border-color var(--ease), box-shadow var(--ease); }
+.process-toggle span { position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--text-faint); transition: transform var(--ease), background var(--ease); }
+.process-toggle[aria-checked='true'] { border-color: rgba(174,185,186,.4); background: rgba(174,185,186,.22); }
+.process-toggle[aria-checked='true'] span { background: #d7dbdc; transform: translateX(12px); }
+.process-toggle:focus-visible, .process-icon-button:focus-visible { outline: 0; box-shadow: 0 0 0 2px rgba(168, 186, 195, .12); }
+.process-icon-button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-faint); cursor: pointer; transition: background var(--ease), color var(--ease); }
+.process-icon-button:hover, .process-icon-button:focus-visible { background: rgba(255,255,255,.08); color: var(--text); }
+.process-icon-button.danger:hover, .process-icon-button.danger:focus-visible { color: #e4b5ae; }
+.process-item-editor { display: grid; gap: 10px; padding: 11px; border-top: 1px solid var(--line); }
+.process-item-editor label { display: grid; gap: 6px; color: var(--text-faint); font-size: 10px; }
+.process-item-editor input, .process-item-editor textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; outline: 0; background: rgba(0,0,0,.15); color: var(--text); font: inherit; font-size: 12px; }
+.process-item-editor input { height: 34px; padding: 0 9px; }
+.process-item-editor textarea { padding: 8px 9px; resize: vertical; }
+.process-item-editor input:focus, .process-item-editor textarea:focus { border-color: var(--line-strong); box-shadow: 0 0 0 2px rgba(168, 186, 195, .08); }
+.process-item-editor > div { display: flex; justify-content: flex-end; gap: 7px; }
+.process-save, .process-cancel { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 11px; transition: background var(--ease), border-color var(--ease), color var(--ease); }
+.process-save:hover, .process-save:focus-visible { border-color: var(--line-strong); background: rgba(255,255,255,.08); color: var(--text); outline: 0; }
+.process-save:disabled { cursor: not-allowed; opacity: .45; }
+.process-cancel:hover, .process-cancel:focus-visible { background: var(--hover); color: var(--text); outline: 0; }
+.process-empty { padding: 18px 12px; border: 1px dashed var(--line); border-radius: 12px; color: var(--text-faint); font-size: 12px; line-height: 1.5; text-align: center; }
+.process-undo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 9px 10px; border: 1px solid rgba(174,185,186,.22); border-radius: 10px; background: rgba(174,185,186,.06); color: var(--text-muted); font-size: 11px; }
+.process-undo button { display: inline-flex; align-items: center; gap: 5px; padding: 4px 6px; border: 0; border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; font-size: 11px; }
+.process-undo button:hover, .process-undo button:focus-visible { background: rgba(255,255,255,.08); outline: 0; }
 .task-timeline { position: relative; gap: 0; padding-left: 3px; }
 .task-timeline > div { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 13px; min-height: 74px; }
 .task-timeline > div:not(:last-child)::after { position: absolute; top: 17px; bottom: -1px; left: 4px; width: 1px; background: var(--line); content: ''; }

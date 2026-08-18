@@ -21,6 +21,21 @@ export interface FarmAgent {
   averageDuration: string
 }
 
+export type ProcessGroupId = 'skills' | 'rules' | 'mcp'
+
+export interface ProcessConfigItem {
+  id: string
+  name: string
+  description: string
+  enabled: boolean
+}
+
+export interface ProcessGroup {
+  id: ProcessGroupId
+  label: string
+  items: ProcessConfigItem[]
+}
+
 export const panelViews: PanelViewDefinition[] = [
   { id: 'farm', label: 'Farm', Icon: Wheat, description: 'Bring agents into one calm, coordinated workspace.' },
   { id: 'process', label: 'Process', Icon: LoaderPinwheel, description: 'Shape how work runs with skills, rules, and MCP.' },
@@ -49,10 +64,34 @@ export const connectionOptions: Array<{ id: string; label: string; description: 
   { id: 'mcp-connection', label: 'MCP connection', description: 'Make an approved external tool available to an agent.', Icon: SlidersHorizontal },
 ]
 
-export const processItems: Array<[string, string, IconType]> = [
-  ['Skills', '4 enabled', Sparkles],
-  ['Rules', 'Workspace defaults', BookOpen],
-  ['MCP', '2 connections', SlidersHorizontal],
+export const processGroups: ProcessGroup[] = [
+  {
+    id: 'skills',
+    label: 'Skills',
+    items: [
+      { id: 'research-brief', name: 'Research brief', description: 'Turn reliable sources into a concise structured research brief for the workspace.', enabled: true },
+      { id: 'product-writing', name: 'Product writing', description: 'Write clear interface, release, and product guidance with a consistent voice.', enabled: true },
+      { id: 'quality-review', name: 'Quality review', description: 'Review work for edge cases, correctness, accessibility, and delivery readiness.', enabled: false },
+    ],
+  },
+  {
+    id: 'rules',
+    label: 'Rules',
+    items: [
+      { id: 'calm-ui', name: 'Calm interface', description: 'Use the quiet Noodo visual language for product surfaces and interaction feedback.', enabled: true },
+      { id: 'source-check', name: 'Source check', description: 'Verify time-sensitive facts against authoritative sources before presenting them.', enabled: true },
+      { id: 'small-changes', name: 'Small changes', description: 'Prefer focused, reversible implementation steps and preserve unrelated user work.', enabled: true },
+    ],
+  },
+  {
+    id: 'mcp',
+    label: 'MCP',
+    items: [
+      { id: 'project-files', name: 'Project files', description: 'Read and update the current workspace files when the task explicitly requires it.', enabled: true },
+      { id: 'local-browser', name: 'Local browser', description: 'Use the local browser only to validate visual and interactive product changes.', enabled: true },
+      { id: 'research-search', name: 'Research search', description: 'Search authoritative sources when current or precise external information is required.', enabled: false },
+    ],
+  },
 ]
 
 export const agentOutcomes = [
