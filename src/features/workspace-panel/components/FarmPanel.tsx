@@ -1,22 +1,21 @@
-import { Plus } from 'lucide-react'
+import { useState } from 'react'
 import { farmAgents } from '../data'
+import { AgentDetailPage } from './AgentDetailPage'
+import { ConnectAgentPage } from './ConnectAgentPage'
+import { FarmAgentList } from './FarmAgentList'
+
+type FarmPage = { kind: 'list' } | { kind: 'detail'; agentName: string } | { kind: 'connect' }
 
 export function FarmPanel() {
-  return (
-    <div className="panel-content">
-      <h2>Agents, ready when you are.</h2>
-      <p className="panel-intro">Connect specialist agents and decide who joins each task.</p>
-      <div className="agent-list">
-        {farmAgents.map(({ name, Icon, status }) => (
-          <button type="button" className="agent-row" key={name} aria-label={`${name}, ${status}`}>
-            <span className="agent-row-content">
-              <span className="agent-avatar"><Icon size={16} /></span>
-              <strong>{name}</strong><i className={`online-dot ${status}`} aria-hidden="true" />
-            </span>
-          </button>
-        ))}
-      </div>
-      <button type="button" className="panel-secondary farm-connect"><Plus size={16} />Connect agent</button>
-    </div>
-  )
+  const [page, setPage] = useState<FarmPage>({ kind: 'list' })
+  const showList = () => setPage({ kind: 'list' })
+
+  if (page.kind === 'detail') {
+    const agent = farmAgents.find(({ name }) => name === page.agentName)
+    if (agent) return <AgentDetailPage agent={agent} onBack={showList} />
+  }
+
+  if (page.kind === 'connect') return <ConnectAgentPage onBack={showList} />
+
+  return <FarmAgentList onSelectAgent={(agentName) => setPage({ kind: 'detail', agentName })} onConnectAgent={() => setPage({ kind: 'connect' })} />
 }
