@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { useEffect } from 'react'
 import { panelViews } from '../data'
 import type { RightPanelView } from '../types'
 
@@ -7,21 +7,28 @@ export interface PanelOverviewProps {
 }
 
 export function PanelOverview({ onSelect }: PanelOverviewProps) {
+  const farm = panelViews.find(({ id }) => id === 'farm')
+
+  useEffect(() => {
+    const openFarm = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === '1' && !event.altKey && !event.shiftKey) {
+        event.preventDefault()
+        onSelect('farm')
+      }
+    }
+    window.addEventListener('keydown', openFarm)
+    return () => window.removeEventListener('keydown', openFarm)
+  }, [onSelect])
+
+  if (!farm) return null
+  const FarmIcon = farm.Icon
+
   return (
     <div className="panel-overview">
-      <p className="panel-eyebrow">Workspace flow</p>
-      <h2>From agents to outcomes.</h2>
-      <p className="panel-intro">Choose a layer to set up your workspace or follow work already in motion.</p>
-      <div className="panel-step-list">
-        {panelViews.map(({ id, label, Icon, description }, index) => (
-          <button type="button" key={id} className="panel-step" onClick={() => onSelect(id)}>
-            <span className="step-number">0{index + 1}</span>
-            <span className="step-icon"><Icon size={18} strokeWidth={1.55} /></span>
-            <span className="step-copy"><strong>{label}</strong><small>{description}</small></span>
-            <ChevronRight className="step-arrow" size={16} strokeWidth={1.6} />
-          </button>
-        ))}
-      </div>
+      <button type="button" className="panel-launch" onClick={() => onSelect(farm.id)} aria-keyshortcuts="Meta+1 Control+1">
+        <span><FarmIcon size={18} strokeWidth={1.6} />{farm.label}</span>
+        <kbd>⌘1</kbd>
+      </button>
     </div>
   )
 }

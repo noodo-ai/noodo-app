@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, Bot, Check, CookingPot, FileText, Globe2, Lightbulb, LoaderPinwheel, MonitorUp, Search, SlidersHorizontal, Soup, Sparkles, Wheat } from 'lucide-react'
+import { BarChart3, BookOpen, Bot, Check, CookingPot, FileText, Globe2, Lightbulb, MonitorUp, Search, SlidersHorizontal, Sparkles, Tractor } from 'lucide-react'
 import type { IconType } from '../../shared/types/icon'
 import type { RightPanelView } from './types'
 
@@ -48,10 +48,7 @@ export interface AgentOutcome {
 }
 
 export const panelViews: PanelViewDefinition[] = [
-  { id: 'farm', label: 'Farm', Icon: Wheat, description: 'Bring agents into one calm, coordinated workspace.' },
-  { id: 'process', label: 'Process', Icon: LoaderPinwheel, description: 'Shape how work runs with skills, rules, and MCP.' },
-  { id: 'cooking', label: 'Cooking', Icon: CookingPot, description: 'Follow live tasks, execution stages, and reasoning summaries.' },
-  { id: 'slurp', label: 'Slurp', Icon: Soup, description: 'Review completed work signals and agent capability levels.' },
+  { id: 'farm', label: 'Farm', Icon: Tractor, description: 'Bring agents into one calm, coordinated workspace.' },
 ]
 
 export const farmAgents: FarmAgent[] = [

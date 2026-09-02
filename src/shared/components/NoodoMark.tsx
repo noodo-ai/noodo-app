@@ -2,20 +2,21 @@ import { useState } from 'react'
 
 export interface NoodoMarkProps {
   label?: string
+  glint?: boolean
 }
 
 type GlintDirection = 'forward' | 'reverse' | null
 
 const MARK_PATH = 'M7 3.5c5-2 7 2.5 3 4C1.5 10 2 15 5 16c5 2 9-10 14-7s.5 13.5-4 12c-5-2.5.5-11 6-2'
 
-export function NoodoMark({ label }: NoodoMarkProps) {
+export function NoodoMark({ label, glint = true }: NoodoMarkProps) {
   const [glintDirection, setGlintDirection] = useState<GlintDirection>(null)
 
   return (
     <span
       className="noodo-mark-target"
-      onMouseEnter={() => setGlintDirection('forward')}
-      onMouseLeave={() => glintDirection && setGlintDirection('reverse')}
+      onMouseEnter={() => glint && setGlintDirection('forward')}
+      onMouseLeave={() => glint && glintDirection && setGlintDirection('reverse')}
     >
       <svg
         className={`noodo-mark ${glintDirection ? `glint-${glintDirection}` : ''}`}
@@ -26,7 +27,7 @@ export function NoodoMark({ label }: NoodoMarkProps) {
         }}
       >
         <path d={MARK_PATH} />
-        <path className="noodo-mark-glint" d={MARK_PATH} pathLength={100} />
+        {glint && <path className="noodo-mark-glint" d={MARK_PATH} pathLength={100} />}
       </svg>
       {label && <span className="noodo-brand-label">{label}</span>}
     </span>

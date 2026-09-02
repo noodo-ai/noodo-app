@@ -1,10 +1,8 @@
 import { useRef, type CSSProperties } from 'react'
 import { HomeHero } from '../features/composer/components/HomeHero'
 import { ConversationView } from '../features/conversation/components/ConversationView'
-import { ExplorationSurface } from '../features/exploration/components/ExplorationSurface'
-import { getExploreTransforms } from '../features/exploration/utils'
 import { MobileHeader } from '../features/navigation/components/MobileHeader'
-import { Sidebar } from '../features/navigation/components/Sidebar'
+import { Sidebar, SidebarToggle } from '../features/navigation/components/Sidebar'
 import { useWorkspaceController } from '../features/workspace/hooks/useWorkspaceController'
 import { RightPanel } from '../features/workspace-panel/components/RightPanel'
 import { WorkspacePanelControls } from '../features/workspace-panel/components/WorkspacePanelControls'
@@ -12,18 +10,20 @@ import { WorkspacePanelControls } from '../features/workspace-panel/components/W
 export default function App() {
   const shellRef = useRef<HTMLDivElement>(null)
   const workspaceRef = useRef<HTMLElement>(null)
-  const { sidebar, panel, composer, conversation, exploration } = useWorkspaceController()
-  const transforms = getExploreTransforms(exploration.progress)
+  const { sidebar, panel, composer, conversation } = useWorkspaceController()
   const appShellWidth = () => shellRef.current?.clientWidth
 
   const workspaceStyle = {
-    '--drawer-shift': `${transforms.drawerShift}px`,
-    '--hero-shift': `${transforms.heroShift}px`,
     '--right-panel-width': `${panel.width}px`,
   } as CSSProperties
 
+  const appShellStyle = {
+    '--sidebar-width': `${sidebar.width}px`,
+    '--sidebar-gutter': `${sidebar.width + 6}px`,
+  } as CSSProperties
+
   return (
-    <div className="app-shell" ref={shellRef}>
+    <div className={`app-shell ${sidebar.isResizing ? 'resizing-sidebar' : ''}`} ref={shellRef} style={appShellStyle}>
       <Sidebar
         expanded={sidebar.expanded}
         preview={sidebar.preview}
@@ -32,15 +32,17 @@ export default function App() {
         onReset={conversation.reset}
         activePanel={panel.open ? panel.view : null}
         onSelectPanel={(view) => panel.select(view, appShellWidth())}
+        isResizing={sidebar.isResizing}
+        onStartResize={sidebar.startResizing}
+        onResizeByKeyboard={sidebar.resizeByKeyboard}
       />
       <main
         ref={workspaceRef}
         className={`workspace ${sidebar.expanded || sidebar.preview ? 'sidebar-open' : ''} ${panel.open ? 'right-panel-open' : ''} ${panel.isResizing ? 'resizing-panel' : ''} ${conversation.hasMessages ? 'conversation' : ''}`}
         style={workspaceStyle}
       >
-        <section className="content-surface" onWheel={exploration.handleWheel} onScroll={(event) => {
-          if (event.currentTarget.scrollTop) event.currentTarget.scrollTop = 0
-        }}>
+        <SidebarToggle visible={!sidebar.expanded && !sidebar.preview} onToggle={sidebar.toggle} />
+        <section className="content-surface">
           <MobileHeader onOpenNavigation={() => sidebar.setExpanded(true)} onReset={conversation.reset} />
           {conversation.hasMessages ? (
             <ConversationView
@@ -53,18 +55,14 @@ export default function App() {
               onReset={conversation.reset}
             />
           ) : (
-            <>
-              <HomeHero
-                input={composer.input}
-                mode={composer.mode}
-                focusRequest={composer.focusRequest}
-                onInputChange={composer.setInput}
-                onModeChange={composer.setMode}
-                onSubmit={composer.submit}
-                onPickPrompt={composer.pickPrompt}
-              />
-              <ExplorationSurface progress={exploration.progress} setProgress={exploration.setProgress} onPick={composer.pickPrompt} />
-            </>
+            <HomeHero
+              input={composer.input}
+              mode={composer.mode}
+              onInputChange={composer.setInput}
+              onModeChange={composer.setMode}
+              onSubmit={composer.submit}
+              onOpenFarm={() => panel.select('farm', appShellWidth())}
+            />
           )}
         </section>
 

@@ -25,8 +25,9 @@ export function WorkspacePanelControls({ open, onOpen, onStartResize, onResizeBy
       )}
       <button
         type="button"
-        className={`right-panel-toggle frame-icon-button ${open ? '' : 'visible'}`}
+        className={`right-panel-toggle frame-icon-button panel-control-tooltip ${open ? '' : 'visible'}`}
         aria-label="Open right panel"
+        data-tooltip="Toggle side panel"
         aria-expanded={open}
         aria-hidden={open}
         tabIndex={open ? -1 : 0}

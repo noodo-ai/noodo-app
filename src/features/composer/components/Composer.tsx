@@ -1,5 +1,5 @@
 import { ArrowUp, Check, ChevronDown, Plus } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { composerModes } from '../data'
 import { useComposerShortcut } from '../hooks/useComposerShortcut'
 import type { ComposerMode } from '../types'
@@ -11,18 +11,13 @@ export interface ComposerProps {
   mode: ComposerMode
   onModeChange: (mode: ComposerMode) => void
   compact?: boolean
-  focusRequest?: number
 }
 
-export function Composer({ value, onChange, onSubmit, mode, onModeChange, compact = false, focusRequest = 0 }: ComposerProps) {
+export function Composer({ value, onChange, onSubmit, mode, onModeChange, compact = false }: ComposerProps) {
   const [modeOpen, setModeOpen] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const menuId = useId()
   useComposerShortcut(inputRef)
-
-  useEffect(() => {
-    if (focusRequest > 0) inputRef.current?.focus()
-  }, [focusRequest])
 
   const submit = (event?: FormEvent) => {
     event?.preventDefault()

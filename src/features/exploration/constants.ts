@@ -1,3 +1,0 @@
-export const EXPLORE_STAGE_ONE = 130
-export const EXPLORE_MAX = 780
-export const BACK_TO_TOP_THRESHOLD = EXPLORE_STAGE_ONE + 240
