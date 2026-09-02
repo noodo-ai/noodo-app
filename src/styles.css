@@ -467,11 +467,11 @@ button { color: inherit; }
   width: var(--right-panel-width);
   overflow: hidden;
   background: var(--page);
-  transform: translate3d(calc(100% + 6px), 0, 0);
-  visibility: hidden;
-  transition: transform var(--panel-motion), visibility 0s linear 300ms, width var(--panel-motion);
+  clip-path: inset(0 0 0 100%);
+  pointer-events: none;
+  transition: clip-path var(--panel-motion);
 }
-.right-panel.open { transform: translate3d(0, 0, 0); visibility: visible; transition-delay: 0s; }
+.right-panel.open { clip-path: inset(0); pointer-events: auto; }
 .workspace.resizing-panel .right-panel { transition: none; }
 .right-panel-head {
   position: relative;
