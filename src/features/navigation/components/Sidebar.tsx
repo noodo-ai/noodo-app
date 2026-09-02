@@ -1,13 +1,12 @@
-import { useState } from 'react'
-import { PanelLeft, PanelLeftClose, PanelLeftOpen, Shovel, Sprout, Settings } from 'lucide-react'
+import type { Ref } from 'react'
+import { PanelLeft, PanelLeftClose, PanelLeftOpen, Sprout, Settings } from 'lucide-react'
 import { NoodoMark } from '../../../shared/components/NoodoMark'
+import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
+import { ResizeHandle } from '../../../shared/components/ResizeHandle'
 import { panelViews } from '../../workspace-panel/data'
 import type { RightPanelView } from '../../workspace-panel/types'
-
-const initialRecentChats = [
-  'Plan a focused product launch',
-  'Review the agent workflow',
-]
+import { MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../resize'
+import { RecentChats } from './RecentChats'
 
 export interface SidebarProps {
   expanded: boolean
@@ -15,16 +14,18 @@ export interface SidebarProps {
   onPreviewChange: (value: boolean) => void
   onToggle: () => void
   onReset: () => void
+  onOpenRecentChat: (title: string) => void
   activePanel: RightPanelView | null
   onSelectPanel: (panel: RightPanelView) => void
   isResizing: boolean
+  width: number
   onStartResize: () => void
   onResizeByKeyboard: (direction: 'wider' | 'narrower') => void
+  collapseButtonRef?: Ref<HTMLButtonElement>
 }
 
-export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset, activePanel, onSelectPanel, isResizing, onStartResize, onResizeByKeyboard }: SidebarProps) {
+export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset, onOpenRecentChat, activePanel, onSelectPanel, isResizing, width, onStartResize, onResizeByKeyboard, collapseButtonRef }: SidebarProps) {
   const visible = expanded || preview
-  const [recentChats, setRecentChats] = useState(initialRecentChats)
 
   return (
     <div
@@ -39,6 +40,8 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
       <aside
         className={`sidebar ${visible ? 'expanded' : ''} ${preview && !expanded ? 'peek' : ''}`}
         aria-label="Workspace navigation"
+        aria-hidden={!visible}
+        inert={!visible}
       >
         <div className="sidebar-head">
           <button className="brand-button" type="button" aria-label="Start a new chat" onClick={onReset}>
@@ -65,25 +68,7 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
               </button>
             ))}
           </nav>
-          <section className="recent-chats" aria-labelledby="recent-chats-heading">
-            <h2 id="recent-chats-heading">Recent</h2>
-            {recentChats.map((chat) => (
-              <div className="recent-chat-row" key={chat}>
-                <button className="recent-chat-open" type="button" title={chat} onClick={onReset}>
-                  <span>{chat}</span>
-                </button>
-                <button
-                  className="recent-chat-delete"
-                  type="button"
-                  aria-label={`Delete chat: ${chat}`}
-                  title="Delete chat"
-                  onClick={() => setRecentChats((chats) => chats.filter((item) => item !== chat))}
-                >
-                  <Shovel size={14} strokeWidth={1.65} />
-                </button>
-              </div>
-            ))}
-          </section>
+          <RecentChats onOpenChat={onOpenRecentChat} />
         </div>
 
         <div className="sidebar-foot">
@@ -94,27 +79,30 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
         </div>
       </aside>
       {visible && (
-        <button className="icon-button collapse panel-control-tooltip" type="button" aria-label={expanded ? 'Collapse sidebar' : 'Pin sidebar open'} data-tooltip="Toggle sidebar" onClick={onToggle}>
-          <span className="panel-icon panel-icon-default"><PanelLeft size={17} strokeWidth={1.6} /></span>
-          <span className="panel-icon panel-icon-action">
-            {expanded ? <PanelLeftClose size={17} strokeWidth={1.6} /> : <PanelLeftOpen size={17} strokeWidth={1.6} />}
-          </span>
-        </button>
+        <PanelToggleButton
+          buttonRef={collapseButtonRef}
+          className="icon-button collapse"
+          aria-label={expanded ? 'Collapse sidebar' : 'Pin sidebar open'}
+          aria-expanded={expanded}
+          tooltip="Toggle sidebar"
+          onClick={onToggle}
+          defaultIcon={<PanelLeft size={17} strokeWidth={1.6} />}
+          actionIcon={expanded ? <PanelLeftClose size={17} strokeWidth={1.6} /> : <PanelLeftOpen size={17} strokeWidth={1.6} />}
+        />
       )}
       {visible && (
-        <button
-          type="button"
-          className={`sidebar-resizer ${isResizing ? 'active' : ''}`}
-          aria-label="Resize sidebar"
-          title="Drag or use arrow keys to resize"
-          onPointerDown={(event) => { event.preventDefault(); onStartResize() }}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowRight') onResizeByKeyboard('wider')
-            if (event.key === 'ArrowLeft') onResizeByKeyboard('narrower')
-          }}
-        >
-          <span />
-        </button>
+        <ResizeHandle
+          className="sidebar-resizer"
+          label="Resize sidebar"
+          value={width}
+          min={MIN_SIDEBAR_WIDTH}
+          max={MAX_SIDEBAR_WIDTH}
+          active={isResizing}
+          widerKey="ArrowRight"
+          narrowerKey="ArrowLeft"
+          onStart={onStartResize}
+          onResizeByKeyboard={onResizeByKeyboard}
+        />
       )}
     </div>
   )
@@ -123,26 +111,26 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
 export interface SidebarToggleProps {
   visible: boolean
   onToggle: () => void
+  buttonRef?: Ref<HTMLButtonElement>
 }
 
-export function SidebarToggle({ visible, onToggle }: SidebarToggleProps) {
+export function SidebarToggle({ visible, onToggle, buttonRef }: SidebarToggleProps) {
   return (
     <>
       <span className={`left-frame-notch line ${visible ? 'visible' : ''}`} aria-hidden="true" />
       <span className={`left-frame-notch fill ${visible ? 'visible' : ''}`} aria-hidden="true" />
-      <button
-        type="button"
-        className={`left-sidebar-toggle frame-icon-button panel-control-tooltip ${visible ? 'visible' : ''}`}
+      <PanelToggleButton
+        buttonRef={buttonRef}
+        className={`left-sidebar-toggle frame-icon-button ${visible ? 'visible' : ''}`}
         aria-label="Open sidebar"
-        data-tooltip="Toggle sidebar"
         aria-expanded={false}
         aria-hidden={!visible}
         tabIndex={visible ? 0 : -1}
         onClick={onToggle}
-      >
-        <span className="panel-icon panel-icon-default"><NoodoMark glint={false} /></span>
-        <span className="panel-icon panel-icon-action"><PanelLeftOpen size={18} strokeWidth={1.6} /></span>
-      </button>
+        tooltip="Toggle sidebar"
+        defaultIcon={<NoodoMark glint={false} />}
+        actionIcon={<PanelLeftOpen size={18} strokeWidth={1.6} />}
+      />
     </>
   )
 }

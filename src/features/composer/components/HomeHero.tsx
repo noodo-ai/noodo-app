@@ -1,4 +1,4 @@
-import { capabilities } from '../data'
+import { capabilities, type CapabilityId } from '../data'
 import type { ComposerMode } from '../types'
 import { Composer } from './Composer'
 
@@ -8,10 +8,10 @@ export interface HomeHeroProps {
   onInputChange: (value: string) => void
   onModeChange: (mode: ComposerMode) => void
   onSubmit: () => void
-  onOpenFarm: () => void
+  onOpenCapability: (capability: CapabilityId) => void
 }
 
-export function HomeHero({ input, mode, onInputChange, onModeChange, onSubmit, onOpenFarm }: HomeHeroProps) {
+export function HomeHero({ input, mode, onInputChange, onModeChange, onSubmit, onOpenCapability }: HomeHeroProps) {
   return (
     <section className="hero" aria-labelledby="home-title">
       <div className="hero-center">
@@ -20,8 +20,8 @@ export function HomeHero({ input, mode, onInputChange, onModeChange, onSubmit, o
           <span className="wordmark-name">NOODO</span>
         </div>
         <div className="capabilities" aria-label="Quick actions">
-          {capabilities.map(({ label, Icon }) => (
-            <button type="button" key={label} onClick={onOpenFarm}><Icon size={16} strokeWidth={1.55} />{label}</button>
+          {capabilities.map(({ id, label, Icon }) => (
+            <button type="button" key={id} onClick={() => onOpenCapability(id)}><Icon size={16} strokeWidth={1.55} />{label}</button>
           ))}
         </div>
       </div>

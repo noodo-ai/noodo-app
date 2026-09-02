@@ -1,36 +1,38 @@
+import type { Ref } from 'react'
 import { PanelRight, PanelRightClose } from 'lucide-react'
+import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
 import { panelViews } from '../data'
 import type { RightPanelView } from '../types'
-import { CookingPanel } from './CookingPanel'
 import { PanelOverview } from './PanelOverview'
-import { ProcessPanel } from './ProcessPanel'
-import { SlurpPanel } from './SlurpPanel'
 
 export interface RightPanelProps {
   open: boolean
   activeView: RightPanelView | null
   onSelect: (panel: RightPanelView) => void
   onClose: () => void
-  hasTask: boolean
+  closeButtonRef?: Ref<HTMLButtonElement>
 }
 
-export function RightPanel({ open, activeView, onSelect, onClose, hasTask }: RightPanelProps) {
+export function RightPanel({ open, activeView, onSelect, onClose, closeButtonRef }: RightPanelProps) {
   const title = activeView ? panelViews.find((item) => item.id === activeView)?.label : 'Workspace'
 
   return (
-    <aside className={`right-panel ${open ? 'open' : ''}`} aria-hidden={!open} aria-label={`${title} panel`}>
+    <aside className={`right-panel ${open ? 'open' : ''}`} aria-hidden={!open} inert={!open} aria-label={`${title} panel`}>
       <div className={`right-panel-head ${activeView ? '' : 'overview'}`}>
         {activeView && <span>{title}</span>}
-        <button type="button" className="right-panel-close frame-icon-button panel-control-tooltip" aria-label="Close right panel" data-tooltip="Toggle side panel" onClick={onClose}>
-          <span className="panel-icon panel-icon-default"><PanelRight size={18} strokeWidth={1.6} /></span>
-          <span className="panel-icon panel-icon-action"><PanelRightClose size={18} strokeWidth={1.6} /></span>
-        </button>
+        <PanelToggleButton
+          buttonRef={closeButtonRef}
+          className="right-panel-close frame-icon-button"
+          aria-label="Close right panel"
+          aria-expanded={open}
+          tooltip="Toggle side panel"
+          onClick={onClose}
+          defaultIcon={<PanelRight size={18} strokeWidth={1.6} />}
+          actionIcon={<PanelRightClose size={18} strokeWidth={1.6} />}
+        />
       </div>
       <div className={`right-panel-scroll ${activeView ? '' : 'overview'}`}>
-        {!activeView && <PanelOverview onSelect={onSelect} />}
-        {activeView === 'process' && <ProcessPanel />}
-        {activeView === 'cooking' && <CookingPanel hasTask={hasTask} />}
-        {activeView === 'slurp' && <SlurpPanel />}
+        {!activeView && <PanelOverview enabled={open} onSelect={onSelect} />}
       </div>
     </aside>
   )

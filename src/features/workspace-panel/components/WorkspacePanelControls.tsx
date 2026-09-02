@@ -1,41 +1,47 @@
+import type { Ref } from 'react'
 import { PanelRight, PanelRightOpen } from 'lucide-react'
+import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
+import { ResizeHandle } from '../../../shared/components/ResizeHandle'
+import { MIN_PANEL_WIDTH } from '../resize'
 
 export interface WorkspacePanelControlsProps {
   open: boolean
+  width: number
+  isResizing: boolean
   onOpen: () => void
   onStartResize: () => void
   onResizeByKeyboard: (direction: 'wider' | 'narrower') => void
+  toggleButtonRef?: Ref<HTMLButtonElement>
 }
 
-export function WorkspacePanelControls({ open, onOpen, onStartResize, onResizeByKeyboard }: WorkspacePanelControlsProps) {
+export function WorkspacePanelControls({ open, width, isResizing, onOpen, onStartResize, onResizeByKeyboard, toggleButtonRef }: WorkspacePanelControlsProps) {
   return (
     <>
       {open && (
-        <button
-          type="button"
+        <ResizeHandle
           className="panel-resizer"
-          aria-label="Resize right panel"
-          title="Drag or use arrow keys to resize"
-          onPointerDown={(event) => { event.preventDefault(); onStartResize() }}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowLeft') onResizeByKeyboard('wider')
-            if (event.key === 'ArrowRight') onResizeByKeyboard('narrower')
-          }}
-        ><span /></button>
+          label="Resize right panel"
+          value={width}
+          min={MIN_PANEL_WIDTH}
+          active={isResizing}
+          widerKey="ArrowLeft"
+          narrowerKey="ArrowRight"
+          onStart={onStartResize}
+          onResizeByKeyboard={onResizeByKeyboard}
+        />
       )}
-      <button
-        type="button"
-        className={`right-panel-toggle frame-icon-button panel-control-tooltip ${open ? '' : 'visible'}`}
+      <PanelToggleButton
+        buttonRef={toggleButtonRef}
+        className={`right-panel-toggle frame-icon-button ${open ? '' : 'visible'}`}
         aria-label="Open right panel"
-        data-tooltip="Toggle side panel"
         aria-expanded={open}
         aria-hidden={open}
         tabIndex={open ? -1 : 0}
         onClick={onOpen}
-      >
-        <span className="panel-icon panel-icon-default"><PanelRight size={18} strokeWidth={1.6} /></span>
-        <span className="panel-icon panel-icon-action"><PanelRightOpen size={18} strokeWidth={1.6} /></span>
-      </button>
+        tooltip="Toggle side panel"
+        defaultIcon={<PanelRight size={18} strokeWidth={1.6} />}
+        actionIcon={<PanelRightOpen size={18} strokeWidth={1.6} />}
+      />
     </>
   )
 }

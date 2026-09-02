@@ -4,6 +4,8 @@ import type { ComposerMode } from './types'
 
 export const composerModes: ComposerMode[] = ['Quick Run', 'Deep Think', 'Create']
 
-export const capabilities: Array<{ label: string; Icon: IconType }> = [
-  { label: 'Build, version, and deploy data workflows.', Icon: Tractor },
+export type CapabilityId = 'farm'
+
+export const capabilities: Array<{ id: CapabilityId; label: string; Icon: IconType }> = [
+  { id: 'farm', label: 'Build, version, and deploy data workflows.', Icon: Tractor },
 ]

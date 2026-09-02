@@ -31,6 +31,11 @@ export function useWorkspaceController() {
     setInput('')
   }
 
+  const openMockConversation = (title: string) => {
+    setMessages([title])
+    setInput('')
+  }
+
   const openRightPanel = (appShellWidth?: number) => {
     if (!rightPanelOpen && window.innerWidth > 900 && appShellWidth) {
       const sidebarMargin = sidebarExpanded || sidebarPreview ? sidebarResize.width + 6 : 0
@@ -68,6 +73,6 @@ export function useWorkspaceController() {
     },
     panel: { ...panel, open: rightPanelOpen, view: rightPanelView, openPanel: openRightPanel, select: selectRightPanel, close: () => setRightPanelOpen(false) },
     composer: { input, mode, setInput, setMode, submit },
-    conversation: { messages, hasMessages: messages.length > 0, reset },
+    conversation: { messages, hasMessages: messages.length > 0, reset, openMock: openMockConversation },
   }
 }

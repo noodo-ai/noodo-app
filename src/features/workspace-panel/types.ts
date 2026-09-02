@@ -1,1 +1,1 @@
-export type RightPanelView = 'farm' | 'process' | 'cooking' | 'slurp'
+export type RightPanelView = 'farm'

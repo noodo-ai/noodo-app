@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties } from 'react'
+import { useRef, type CSSProperties, type RefObject } from 'react'
 import { HomeHero } from '../features/composer/components/HomeHero'
 import { ConversationView } from '../features/conversation/components/ConversationView'
 import { MobileHeader } from '../features/navigation/components/MobileHeader'
@@ -10,8 +10,32 @@ import { WorkspacePanelControls } from '../features/workspace-panel/components/W
 export default function App() {
   const shellRef = useRef<HTMLDivElement>(null)
   const workspaceRef = useRef<HTMLElement>(null)
+  const sidebarToggleRef = useRef<HTMLButtonElement>(null)
+  const sidebarCollapseRef = useRef<HTMLButtonElement>(null)
+  const mobileNavigationRef = useRef<HTMLButtonElement>(null)
+  const panelToggleRef = useRef<HTMLButtonElement>(null)
+  const panelCloseRef = useRef<HTMLButtonElement>(null)
   const { sidebar, panel, composer, conversation } = useWorkspaceController()
   const appShellWidth = () => shellRef.current?.clientWidth
+  const focusAfterTransition = (target: RefObject<HTMLButtonElement | null>) => {
+    window.requestAnimationFrame(() => target.current?.focus())
+  }
+
+  const toggleSidebar = () => {
+    const willExpand = !sidebar.expanded
+    sidebar.toggle()
+    focusAfterTransition(willExpand ? sidebarCollapseRef : window.innerWidth <= 900 ? mobileNavigationRef : sidebarToggleRef)
+  }
+
+  const openPanel = () => {
+    panel.openPanel(appShellWidth())
+    focusAfterTransition(panelCloseRef)
+  }
+
+  const closePanel = () => {
+    panel.close()
+    focusAfterTransition(panelToggleRef)
+  }
 
   const workspaceStyle = {
     '--right-panel-width': `${panel.width}px`,
@@ -28,22 +52,32 @@ export default function App() {
         expanded={sidebar.expanded}
         preview={sidebar.preview}
         onPreviewChange={sidebar.setPreview}
-        onToggle={sidebar.toggle}
+        onToggle={toggleSidebar}
         onReset={conversation.reset}
+        onOpenRecentChat={conversation.openMock}
         activePanel={panel.open ? panel.view : null}
         onSelectPanel={(view) => panel.select(view, appShellWidth())}
         isResizing={sidebar.isResizing}
+        width={sidebar.width}
         onStartResize={sidebar.startResizing}
         onResizeByKeyboard={sidebar.resizeByKeyboard}
+        collapseButtonRef={sidebarCollapseRef}
       />
       <main
         ref={workspaceRef}
         className={`workspace ${sidebar.expanded || sidebar.preview ? 'sidebar-open' : ''} ${panel.open ? 'right-panel-open' : ''} ${panel.isResizing ? 'resizing-panel' : ''} ${conversation.hasMessages ? 'conversation' : ''}`}
         style={workspaceStyle}
       >
-        <SidebarToggle visible={!sidebar.expanded && !sidebar.preview} onToggle={sidebar.toggle} />
+        <SidebarToggle buttonRef={sidebarToggleRef} visible={!sidebar.expanded && !sidebar.preview} onToggle={toggleSidebar} />
         <section className="content-surface">
-          <MobileHeader onOpenNavigation={() => sidebar.setExpanded(true)} onReset={conversation.reset} />
+          <MobileHeader
+            navigationButtonRef={mobileNavigationRef}
+            onOpenNavigation={() => {
+              sidebar.setExpanded(true)
+              focusAfterTransition(sidebarCollapseRef)
+            }}
+            onReset={conversation.reset}
+          />
           {conversation.hasMessages ? (
             <ConversationView
               messages={conversation.messages}
@@ -61,18 +95,21 @@ export default function App() {
               onInputChange={composer.setInput}
               onModeChange={composer.setMode}
               onSubmit={composer.submit}
-              onOpenFarm={() => panel.select('farm', appShellWidth())}
+              onOpenCapability={(capability) => panel.select(capability, appShellWidth())}
             />
           )}
         </section>
 
         <WorkspacePanelControls
           open={panel.open}
-          onOpen={() => panel.openPanel(appShellWidth())}
+          width={panel.width}
+          isResizing={panel.isResizing}
+          onOpen={openPanel}
           onStartResize={panel.startResizing}
           onResizeByKeyboard={(direction) => panel.resizeByKeyboard(direction, workspaceRef.current?.getBoundingClientRect().width ?? 706)}
+          toggleButtonRef={panelToggleRef}
         />
-        <RightPanel open={panel.open} activeView={panel.view} onSelect={(view) => panel.select(view, appShellWidth())} onClose={panel.close} hasTask={conversation.hasMessages} />
+        <RightPanel closeButtonRef={panelCloseRef} open={panel.open} activeView={panel.view} onSelect={(view) => panel.select(view, appShellWidth())} onClose={closePanel} />
       </main>
     </div>
   )
