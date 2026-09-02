@@ -63,6 +63,9 @@ export default function App() {
         onResizeByKeyboard={sidebar.resizeByKeyboard}
         collapseButtonRef={sidebarCollapseRef}
       />
+      {sidebar.expanded && (
+        <button type="button" className="sidebar-backdrop" aria-label="Close navigation" onClick={toggleSidebar} />
+      )}
       <main
         ref={workspaceRef}
         className={`workspace ${sidebar.expanded || sidebar.preview ? 'sidebar-open' : ''} ${panel.open ? 'right-panel-open' : ''} ${panel.isResizing ? 'resizing-panel' : ''} ${conversation.hasMessages ? 'conversation' : ''}`}
@@ -76,7 +79,6 @@ export default function App() {
               sidebar.setExpanded(true)
               focusAfterTransition(sidebarCollapseRef)
             }}
-            onReset={conversation.reset}
           />
           {conversation.hasMessages ? (
             <ConversationView
