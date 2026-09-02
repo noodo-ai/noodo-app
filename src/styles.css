@@ -10,6 +10,7 @@
   --text-strong: rgba(255, 255, 255, 0.92);
   --text-muted: rgba(255, 255, 255, 0.56);
   --text-faint: rgba(255, 255, 255, 0.38);
+  --sidebar-text: rgba(255, 255, 255, 0.84);
   --line: rgba(255, 255, 255, 0.12);
   --line-strong: rgba(255, 255, 255, 0.18);
   --hover: rgba(255, 255, 255, 0.055);
@@ -20,6 +21,10 @@
   --panel-motion: 300ms cubic-bezier(.4, 0, .2, 1);
   --sidebar-width: 216px;
   --sidebar-gutter: 222px;
+  --tooltip-background: #242423;
+  --tooltip-radius: 8px;
+  --tooltip-padding: 6px 9px;
+  --tooltip-font-size: 12px;
   --font-brand: "SF Pro Rounded", "Arial Rounded MT Bold", ui-rounded, "Trebuchet MS", sans-serif;
 }
 
@@ -139,7 +144,7 @@ button { color: inherit; }
 .sidebar .brand-button { padding-inline: 9px; }
 .sidebar.expanded .sidebar-head > .brand-button { max-width: calc(100% - 38px); }
 .brand-button:hover, .brand-button:focus-visible, .icon-button:hover, .icon-button:focus-visible { background: var(--hover); }
-.noodo-mark-target { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.noodo-mark-target { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .noodo-brand-label { flex: 0 0 auto; font-family: var(--font-brand); font-size: 12px; font-weight: 700; letter-spacing: .1em; }
 .noodo-mark { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
 .sidebar .noodo-mark { width: 19px; height: 19px; }
@@ -194,7 +199,7 @@ button { color: inherit; }
   border: 1px solid transparent;
   border-radius: var(--radius-item);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--sidebar-text);
   font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
@@ -244,8 +249,8 @@ button { color: inherit; }
 }
 .nav-item.active { border-color: var(--line); color: var(--text-strong); }
 .nav-group { display: grid; gap: 1px; }
-.recent-chats { min-width: 0; margin-top: 18px; }
-.recent-chats h2 { margin: 0 0 10px; padding-inline: 9px; color: var(--text-faint); font-size: 12px; font-weight: 560; letter-spacing: .025em; }
+.recent-chats { min-width: 0; margin-top: 32px; }
+.recent-chats h2 { margin: 0 0 10px; padding-inline: 9px; color: var(--text-faint); font-size: 12px; font-weight: 400; letter-spacing: .025em; }
 .recent-chat-row {
   position: relative;
   display: grid;
@@ -254,7 +259,7 @@ button { color: inherit; }
   height: 28px;
   overflow: hidden;
   border-radius: 9px;
-  color: var(--text-muted);
+  color: var(--sidebar-text);
   transition: opacity 100ms ease-out, visibility 0s linear 100ms, color 180ms ease-out;
 }
 .recent-chat-row + .recent-chat-row { margin-top: 1px; }
@@ -282,11 +287,36 @@ button { color: inherit; }
   color: inherit;
   cursor: pointer;
 }
-.recent-chat-open { display: block; min-width: 0; padding-left: 9px; overflow: hidden; font-size: 12px; text-align: left; }
-.recent-chat-open span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-chat-open { display: block; min-width: 0; padding-left: 9px; font-size: 12px; text-align: left; }
+.recent-chat-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .recent-chat-delete { display: grid; place-items: center; width: 32px; color: var(--text-muted); opacity: 0; pointer-events: none; transition: color 180ms ease-out, opacity 180ms ease-out; }
 .recent-chat-row:hover .recent-chat-delete, .recent-chat-row:focus-within .recent-chat-delete { opacity: 1; pointer-events: auto; }
 .recent-chat-delete:hover, .recent-chat-delete:focus-visible { color: var(--text-strong); }
+.recent-chat-tooltip {
+  position: fixed;
+  z-index: 70;
+  width: max-content;
+  padding: var(--tooltip-padding);
+  border: 1px solid var(--line);
+  border-radius: var(--tooltip-radius);
+  background: var(--tooltip-background);
+  color: var(--text);
+  font-size: var(--tooltip-font-size);
+  font-weight: 400;
+  line-height: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-4px, -50%);
+  transition: opacity 160ms ease-out, transform 160ms ease-out, visibility 0s linear 160ms;
+  white-space: normal;
+}
+.recent-chat-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+  transition-delay: 0s;
+}
 .sidebar-foot { position: relative; display: flex; align-items: center; height: 48px; padding: 7px 3px 3px; border-top: 1px solid var(--line); }
 .profile { display: flex; flex: 1; min-width: 32px; align-items: center; gap: 7px; height: 34px; padding: 0 6px; border-radius: 9px; transition: background-color 180ms ease-out; }
 .sidebar.expanded .profile { flex: 0 1 auto; width: calc(100% - 34px); }
@@ -333,13 +363,13 @@ button { color: inherit; }
 .panel-control-tooltip::after {
   position: absolute;
   z-index: 70;
-  padding: 6px 9px;
+  padding: var(--tooltip-padding);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #242423;
+  border-radius: var(--tooltip-radius);
+  background: var(--tooltip-background);
   color: var(--text);
   content: attr(data-tooltip);
-  font-size: 12px;
+  font-size: var(--tooltip-font-size);
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1;
