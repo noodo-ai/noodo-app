@@ -1,4 +1,4 @@
-import type { Ref } from 'react'
+import { useCallback, useEffect, useRef, type Ref } from 'react'
 import { PanelLeft, PanelLeftClose, PanelLeftOpen, Sprout, Settings } from 'lucide-react'
 import { NoodoMark } from '../../../shared/components/NoodoMark'
 import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
@@ -7,6 +7,8 @@ import { panelViews } from '../../workspace-panel/data'
 import type { RightPanelView } from '../../workspace-panel/types'
 import { MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../resize'
 import { RecentChats } from './RecentChats'
+
+const SIDEBAR_PREVIEW_DELAY = 90
 
 export interface SidebarProps {
   expanded: boolean
@@ -26,15 +28,36 @@ export interface SidebarProps {
 
 export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset, onOpenRecentChat, activePanel, onSelectPanel, isResizing, width, onStartResize, onResizeByKeyboard, collapseButtonRef }: SidebarProps) {
   const visible = expanded || preview
+  const previewTimer = useRef<number | null>(null)
+  const clearPreviewTimer = useCallback(() => {
+    if (previewTimer.current === null) return
+    window.clearTimeout(previewTimer.current)
+    previewTimer.current = null
+  }, [])
+  const startPreview = useCallback(() => {
+    if (expanded) return
+    clearPreviewTimer()
+    previewTimer.current = window.setTimeout(() => {
+      previewTimer.current = null
+      onPreviewChange(true)
+    }, SIDEBAR_PREVIEW_DELAY)
+  }, [clearPreviewTimer, expanded, onPreviewChange])
+  const stopPreview = useCallback(() => {
+    clearPreviewTimer()
+    onPreviewChange(false)
+  }, [clearPreviewTimer, onPreviewChange])
+
+  useEffect(() => clearPreviewTimer, [clearPreviewTimer])
 
   return (
     <div
       className={`sidebar-region ${visible ? 'expanded' : ''}`}
-      onPointerLeave={() => onPreviewChange(false)}
+      onPointerLeave={stopPreview}
     >
       <div
         className="sidebar-activation-rail"
-        onPointerEnter={() => !expanded && onPreviewChange(true)}
+        onPointerEnter={startPreview}
+        onPointerLeave={clearPreviewTimer}
         aria-hidden="true"
       />
       <aside
