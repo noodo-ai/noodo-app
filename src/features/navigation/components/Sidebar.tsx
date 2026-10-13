@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, type Ref } from 'react'
-import { PanelLeft, PanelLeftClose, PanelLeftOpen, Sprout, Settings } from 'lucide-react'
+import {
+  PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Sprout,
+  LogOut,
+} from 'lucide-react'
 import { NoodoMark } from '../../../shared/components/NoodoMark'
 import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
 import { ResizeHandle } from '../../../shared/components/ResizeHandle'
+import type { Conversation, User } from '../../assistant/types'
 import { panelViews } from '../../workspace-panel/data'
 import type { RightPanelView } from '../../workspace-panel/types'
 import { MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../resize'
@@ -17,6 +24,10 @@ export interface SidebarProps {
   onToggle: () => void
   onReset: () => void
   onOpenRecentChat: (title: string) => void
+  chats: Conversation[]
+  user: User
+  busy: boolean
+  onLogout: () => void
   activePanel: RightPanelView | null
   onSelectPanel: (panel: RightPanelView) => void
   isResizing: boolean
@@ -26,7 +37,25 @@ export interface SidebarProps {
   collapseButtonRef?: Ref<HTMLButtonElement>
 }
 
-export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset, onOpenRecentChat, activePanel, onSelectPanel, isResizing, width, onStartResize, onResizeByKeyboard, collapseButtonRef }: SidebarProps) {
+export function Sidebar({
+  expanded,
+  preview,
+  onPreviewChange,
+  onToggle,
+  onReset,
+  onOpenRecentChat,
+  chats,
+  user,
+  busy,
+  onLogout,
+  activePanel,
+  onSelectPanel,
+  isResizing,
+  width,
+  onStartResize,
+  onResizeByKeyboard,
+  collapseButtonRef,
+}: SidebarProps) {
   const visible = expanded || preview
   const previewTimer = useRef<number | null>(null)
   const clearPreviewTimer = useCallback(() => {
@@ -67,15 +96,27 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
         inert={!visible}
       >
         <div className="sidebar-head">
-          <button className="brand-button" type="button" aria-label="Start a new chat" onClick={onReset}>
+          <button
+            className="brand-button"
+            type="button"
+            aria-label="Start a new chat"
+            onClick={onReset}
+          >
             <NoodoMark label="NOODO" />
           </button>
         </div>
 
         <div className="sidebar-scroll">
           <nav className="nav-group" aria-label="Primary navigation">
-            <button type="button" className="nav-item nav-item-new-chat" aria-label="New chat" onClick={onReset}>
-              <Sprout size={17} strokeWidth={1.65} /><span>New chat</span>
+            <button
+              type="button"
+              className="nav-item nav-item-new-chat"
+              aria-label="New chat"
+              disabled={busy}
+              onClick={onReset}
+            >
+              <Sprout size={17} strokeWidth={1.65} />
+              <span>New chat</span>
             </button>
             {panelViews.map(({ id, label, Icon }) => (
               <button
@@ -87,18 +128,36 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
                 aria-pressed={activePanel === id}
                 onClick={() => onSelectPanel(id)}
               >
-                <Icon size={17} strokeWidth={1.65} /><span>{label}</span>
+                <Icon size={17} strokeWidth={1.65} />
+                <span>{label}</span>
               </button>
             ))}
           </nav>
-          <RecentChats onOpenChat={onOpenRecentChat} />
+          <RecentChats
+            chats={chats}
+            disabled={busy}
+            onOpenChat={onOpenRecentChat}
+          />
         </div>
 
         <div className="sidebar-foot">
-          <button type="button" className="profile" aria-label="User Lin Ke" data-tooltip="Lin Ke">
-            <span className="avatar">LK</span><span className="profile-name">Lin Ke</span>
-          </button>
-          {visible && <button type="button" className="icon-button settings" aria-label="Settings"><Settings size={17} strokeWidth={1.6} /></button>}
+          <div className="profile">
+            <span className="avatar">
+              {user.username.slice(0, 2).toUpperCase()}
+            </span>
+            <span className="profile-name">{user.username}</span>
+          </div>
+          {visible && (
+            <button
+              type="button"
+              className="icon-button settings"
+              disabled={busy}
+              aria-label="Sign out"
+              onClick={onLogout}
+            >
+              <LogOut size={17} strokeWidth={1.6} />
+            </button>
+          )}
         </div>
       </aside>
       {visible && (
@@ -109,8 +168,14 @@ export function Sidebar({ expanded, preview, onPreviewChange, onToggle, onReset,
           aria-expanded={expanded}
           tooltip="Toggle sidebar"
           onClick={onToggle}
-          defaultIcon={<PanelLeft size={17} strokeWidth={1.6} />}
-          actionIcon={expanded ? <PanelLeftClose size={17} strokeWidth={1.6} /> : <PanelLeftOpen size={17} strokeWidth={1.6} />}
+          defaultIcon={<PanelLeft size={18} strokeWidth={1.6} />}
+          actionIcon={
+            expanded ? (
+              <PanelLeftClose size={18} strokeWidth={1.6} />
+            ) : (
+              <PanelLeftOpen size={18} strokeWidth={1.6} />
+            )
+          }
         />
       )}
       {visible && (
@@ -137,11 +202,21 @@ export interface SidebarToggleProps {
   buttonRef?: Ref<HTMLButtonElement>
 }
 
-export function SidebarToggle({ visible, onToggle, buttonRef }: SidebarToggleProps) {
+export function SidebarToggle({
+  visible,
+  onToggle,
+  buttonRef,
+}: SidebarToggleProps) {
   return (
     <>
-      <span className={`left-frame-notch line ${visible ? 'visible' : ''}`} aria-hidden="true" />
-      <span className={`left-frame-notch fill ${visible ? 'visible' : ''}`} aria-hidden="true" />
+      <span
+        className={`left-frame-notch line ${visible ? 'visible' : ''}`}
+        aria-hidden="true"
+      />
+      <span
+        className={`left-frame-notch fill ${visible ? 'visible' : ''}`}
+        aria-hidden="true"
+      />
       <PanelToggleButton
         buttonRef={buttonRef}
         className={`left-sidebar-toggle frame-icon-button ${visible ? 'visible' : ''}`}

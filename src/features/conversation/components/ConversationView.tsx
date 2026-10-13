@@ -1,43 +1,99 @@
-import { CircleUserRound, X } from 'lucide-react'
-import { NoodoMark } from '../../../shared/components/NoodoMark'
-import { Composer } from '../../composer/components/Composer'
-import type { ComposerMode } from '../../composer/types'
-
+import { useEffect, useRef } from 'react'
+import { AssistantMarkdown } from './AssistantMarkdown'
+import { ResponseSteps } from './ResponseSteps'
+import { MessageActions } from './MessageActions'
+import { DataCards } from '../../assistant/components/DataCards'
+import { toolLabels, statusLabels } from '../../assistant/progress'
+import type { ChatMessage, ToolStatus } from '../../assistant/types'
 export interface ConversationViewProps {
-  messages: string[]
-  input: string
-  mode: ComposerMode
-  onInputChange: (value: string) => void
-  onModeChange: (mode: ComposerMode) => void
-  onSubmit: () => void
-  onReset: () => void
+  messages: ChatMessage[]
+  tools: ToolStatus[]
+  busy: boolean
+  hasOlder: boolean
+  loading: boolean
+  onLoadOlder: () => void
 }
-
-export function ConversationView({ messages, input, mode, onInputChange, onModeChange, onSubmit, onReset }: ConversationViewProps) {
+export function ConversationView({
+  messages,
+  tools,
+  busy,
+  hasOlder,
+  loading,
+  onLoadOlder,
+}: ConversationViewProps) {
+  const bottom = useRef<HTMLDivElement>(null),
+    last = messages.at(-1)
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ block: 'nearest' })
+  }, [last?.text, last?.result?.activity, messages.length])
   return (
-    <section className="chat-view" aria-label="Conversation">
-      <header className="chat-header">
-        <div><span className="status-dot" />Workspace session</div>
-        <button type="button" onClick={onReset}><X size={15} />End</button>
-      </header>
-      <div className="messages" aria-live="polite">
-        {messages.map((message, index) => (
-          <div className="message-pair" key={`${message}-${index}`}>
-            <div className="user-message"><span>{message}</span><CircleUserRound size={20} /></div>
-            <div className="assistant-message" role="status">
-              <span className="assistant-mark"><NoodoMark /></span>
-              <div>
-                <strong>Task received</strong>
-                <p>I’ll break this down in {mode} mode and present the result here.</p>
-                <div className="mock-progress" aria-label="Preparing response"><span /><span /><span /></div>
+    <div className="messages" aria-label="Conversation messages">
+      {hasOlder && (
+        <button
+          className="text-action"
+          onClick={onLoadOlder}
+          disabled={loading}
+        >
+          {loading ? 'Loading…' : 'Load older messages'}
+        </button>
+      )}
+      {messages.map((message) => (
+        <div className="message-pair" key={message.id}>
+          {message.role === 'user' ? (
+            <div className="user-message">
+              <div className="message-content">
+                <span>{message.text}</span>
+                <MessageActions text={message.text} createdAt={message.createdAt} />
               </div>
             </div>
+          ) : (
+            <div className="assistant-message">
+              <div className="assistant-body message-content">
+                {message.textStatus !== 'final' && (
+                  <p className="scope-note">
+                    {busy && message === last
+                      ? 'Responding…'
+                      : message.text
+                        ? 'Answer incomplete'
+                        : 'Explanation unavailable'}
+                  </p>
+                )}
+                {message.result?.activity?.length ? (
+                  <ResponseSteps
+                    activity={message.result.activity}
+                    cards={message.result.dataCards}
+                    responding={busy && message === last}
+                    startedAt={message.startedAt}
+                    completedAt={message.completedAt}
+                  />
+                ) : (
+                  <>
+                    {message.result && <DataCards cards={message.result.dataCards} />}
+                    <AssistantMarkdown text={message.text} />
+                  </>
+                )}
+                <MessageActions text={message.text} createdAt={message.createdAt} />
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+      {tools.length > 0 &&
+        !messages.some((m) => m.result?.activity?.length) && (
+          <div className="tool-status" aria-live="polite">
+            {tools.map((t) => (
+              <p key={t.id}>
+                {toolLabels[t.name] ?? 'Read-only query'} ·{' '}
+                {statusLabels[t.status] ?? 'Pending'}
+                {t.status === 'partial'
+                  ? ' · See coverage in the data card'
+                  : ''}
+              </p>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="chat-composer">
-        <Composer compact value={input} onChange={onInputChange} onSubmit={onSubmit} mode={mode} onModeChange={onModeChange} />
-      </div>
-    </section>
+        )}
+      {busy && !last?.text && <p role="status">Fetching read-only data…</p>}
+      <div ref={bottom} />
+    </div>
   )
 }

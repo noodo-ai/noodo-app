@@ -1,17 +1,6 @@
-import { capabilities, type CapabilityId } from '../data'
-import type { ComposerMode } from '../types'
-import { Composer } from './Composer'
-
-export interface HomeHeroProps {
-  input: string
-  mode: ComposerMode
-  onInputChange: (value: string) => void
-  onModeChange: (mode: ComposerMode) => void
-  onSubmit: () => void
-  onOpenCapability: (capability: CapabilityId) => void
-}
-
-export function HomeHero({ input, mode, onInputChange, onModeChange, onSubmit, onOpenCapability }: HomeHeroProps) {
+import { examples } from '../data'
+import { Composer, type ComposerProps } from './Composer'
+export function HomeHero(props: ComposerProps) {
   return (
     <section className="hero" aria-labelledby="home-title">
       <div className="hero-center">
@@ -19,14 +8,24 @@ export function HomeHero({ input, mode, onInputChange, onModeChange, onSubmit, o
           <span className="wordmark-lead">LET’S</span>
           <span className="wordmark-name">NOODO</span>
         </div>
-        <div className="capabilities" aria-label="Quick actions">
-          {capabilities.map(({ id, label, Icon }) => (
-            <button type="button" key={id} onClick={() => onOpenCapability(id)}><Icon size={16} strokeWidth={1.55} />{label}</button>
+        <p className="scope-note">
+          Understand markets, positions and risk on Hyperliquid.
+        </p>
+        <div className="assistant-examples">
+          {examples.map((question) => (
+            <button
+              type="button"
+              key={question}
+              disabled={props.disabled || props.busy}
+              onClick={() => props.onChange(question)}
+            >
+              {question}
+            </button>
           ))}
         </div>
       </div>
       <div className="home-composer">
-        <Composer value={input} onChange={onInputChange} onSubmit={onSubmit} mode={mode} onModeChange={onModeChange} />
+        <Composer {...props} />
       </div>
     </section>
   )

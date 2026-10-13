@@ -1,1 +1,1 @@
-export type ComposerMode = 'Quick Run' | 'Deep Think' | 'Create'
+export type ComposerMode = 'Hyperliquid'

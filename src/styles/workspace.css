@@ -1,0 +1,38 @@
+.app-shell { position: relative; width: 100%; height: 100%; padding: 6px; background: var(--page); }
+.workspace {
+  position: relative;
+  height: 100%;
+  margin-left: 0;
+  overflow: hidden;
+  background: var(--page);
+  transition: margin-left var(--panel-motion);
+}
+.workspace.sidebar-open { margin-left: var(--sidebar-gutter); }
+.workspace:not(.right-panel-open)::before,
+.workspace:not(.right-panel-open)::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 57px;
+  height: 57px;
+  clip-path: path("M 2 0 H 57 V 57 C 57 50.373 51.627 45 45 45 H 26 C 19.373 45 14 39.627 14 33 V 12 C 14 5.373 8.627 0 2 0 Z");
+  content: '';
+  pointer-events: none;
+}
+.workspace:not(.right-panel-open)::before {
+  z-index: 29;
+  background: var(--line);
+  transform: translate(-1px, 1px);
+}
+.workspace:not(.right-panel-open)::after { z-index: 30; background: var(--page); }
+.content-surface {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  border: 1px solid var(--surface-line);
+  border-radius: var(--radius-shell);
+  background: var(--surface);
+  transition: right var(--panel-motion), border-radius var(--ease);
+}
+.workspace.right-panel-open .content-surface { right: calc(var(--right-panel-width) + 6px); }
+.workspace.resizing-panel .content-surface { transition: none; }

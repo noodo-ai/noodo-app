@@ -1,9 +1,7 @@
-import { ArrowUp, Check, ChevronDown, Plus } from 'lucide-react'
-import { useId, useRef, useState, type FormEvent } from 'react'
-import { composerModes } from '../data'
+import { ArrowUp, Square } from 'lucide-react'
+import { useRef, type FormEvent } from 'react'
 import { useComposerShortcut } from '../hooks/useComposerShortcut'
 import type { ComposerMode } from '../types'
-
 export interface ComposerProps {
   value: string
   onChange: (value: string) => void
@@ -11,62 +9,69 @@ export interface ComposerProps {
   mode: ComposerMode
   onModeChange: (mode: ComposerMode) => void
   compact?: boolean
+  disabled?: boolean
+  busy?: boolean
+  onCancel?: () => void
 }
-
-export function Composer({ value, onChange, onSubmit, mode, onModeChange, compact = false }: ComposerProps) {
-  const [modeOpen, setModeOpen] = useState(false)
+export function Composer({
+  value,
+  onChange,
+  onSubmit,
+  compact = false,
+  disabled = false,
+  busy = false,
+  onCancel,
+}: ComposerProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const menuId = useId()
   useComposerShortcut(inputRef)
-
   const submit = (event?: FormEvent) => {
     event?.preventDefault()
-    if (value.trim()) onSubmit()
+    if (value.trim() && !disabled && !busy) onSubmit()
   }
-
   return (
-    <form className={`composer ${compact ? 'compact' : ''}`} onSubmit={submit} aria-label="Task composer">
+    <form
+      className={`composer ${compact ? 'compact' : ''}`}
+      onSubmit={submit}
+      aria-label="Hyperliquid composer"
+    >
       <textarea
         ref={inputRef}
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault()
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault()
             submit()
           }
         }}
-        placeholder="Ask anything, or create a task…"
+        placeholder="Ask about markets, positions or account risk…"
         rows={2}
         aria-label="Task input"
+        maxLength={4000}
+        disabled={disabled || busy}
       />
       <div className="composer-actions">
-        <button type="button" className="composer-tool" aria-label="Add attachment"><Plus size={20} strokeWidth={1.6} /></button>
+        <span className="scope-note">Read-only · {value.length}/4,000</span>
         <div className="composer-right">
-          <div className="mode-wrap" onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setModeOpen(false)
-          }}>
+          {busy ? (
             <button
               type="button"
-              className="mode-button"
-              onClick={() => setModeOpen((open) => !open)}
-              aria-expanded={modeOpen}
-              aria-haspopup="menu"
-              aria-controls={menuId}
+              className="send-button"
+              onClick={onCancel}
+              aria-label="Stop response"
             >
-              {mode}<ChevronDown size={14} />
+              <Square size={13} />
             </button>
-            {modeOpen && (
-              <div className="mode-menu" id={menuId} role="menu" aria-label="Execution mode">
-                {composerModes.map((item) => (
-                  <button type="button" role="menuitemradio" aria-checked={item === mode} key={item} onClick={() => { onModeChange(item); setModeOpen(false) }}>
-                    <span>{item}</span>{item === mode && <Check size={14} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="send-button" disabled={!value.trim()} aria-label="Send task" type="submit"><ArrowUp size={19} strokeWidth={2} /></button>
+          ) : (
+            <button
+              className="send-button"
+              disabled={!value.trim() || disabled}
+              aria-label="Send task"
+              type="submit"
+            >
+              <ArrowUp size={16} strokeWidth={2} />
+            </button>
+          )}
         </div>
       </div>
     </form>
