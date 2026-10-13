@@ -24,7 +24,6 @@ export function readPending(key: string): Pending | null {
       typeof value.clientRequestId !== 'string' ||
       !value.clientRequestId ||
       typeof value.text !== 'string' ||
-      value.text.length > 4000 ||
       typeof value.expectedAddressVersion !== 'number' ||
       !Number.isSafeInteger(value.expectedAddressVersion) ||
       value.expectedAddressVersion < 1 ||

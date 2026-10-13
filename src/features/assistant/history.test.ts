@@ -36,3 +36,9 @@ it('ignores malformed storage data', () => {
   sessionStorage.setItem('pending', '{')
   expect(readPending('pending')).toBeNull()
 })
+
+it('restores pending messages beyond 4000 characters without truncation', () => {
+  const request = { ...valid(), text: 'x'.repeat(8000) }
+  sessionStorage.setItem('pending', JSON.stringify(request))
+  expect(readPending('pending')).toEqual(request)
+})

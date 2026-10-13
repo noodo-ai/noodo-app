@@ -13,6 +13,7 @@ import type { ChatMessage, Pending, Run, ToolStatus } from '../types'
 
 interface RunExecutionOptions {
   observedAddress: string | null
+  resolveAddress: (address: string | null, version: number) => void
   mounted: RefObject<boolean>
   setMessages: Dispatch<SetStateAction<ChatMessage[]>>
   setError: Dispatch<SetStateAction<string>>
@@ -22,6 +23,7 @@ interface RunExecutionOptions {
 
 export function useRunExecution({
   observedAddress,
+  resolveAddress,
   mounted,
   setMessages,
   setError,
@@ -40,6 +42,7 @@ export function useRunExecution({
   )
   const applyRun = useCallback(
     (run: Run) => {
+      resolveAddress(run.observedAddress, run.addressVersion)
       setMessages((current) => {
         const final: ChatMessage = {
           id: `assistant:${run.id}`,
@@ -77,7 +80,7 @@ export function useRunExecution({
       )
       if (run.error) setError(run.error.message)
     },
-    [setMessages, setError],
+    [setMessages, setError, resolveAddress],
   )
   const execute = useCallback(
     async (value: Pending, recoverOnly = false) => {

@@ -13,7 +13,6 @@ import { WorkspacePanelControls } from '../features/workspace-panel/components/W
 import { useAssistant } from '../features/assistant/hooks/useAssistant'
 import { useAuth } from '../features/assistant/hooks/useAuth'
 import { Login } from '../features/assistant/components/Login'
-import { AccountSelector } from '../features/assistant/components/AccountSelector'
 import type { User } from '../features/assistant/types'
 function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
   const shellRef = useRef<HTMLDivElement>(null)
@@ -125,11 +124,6 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
             }}
           />
           <div className="assistant-toolbar">
-            <AccountSelector
-              address={chat.conversation?.observedAddress ?? null}
-              disabled={chat.busy || !!chat.pending || chat.loading}
-              onChange={chat.changeAddress}
-            />
             <button
               className="text-action mobile-signout"
               disabled={chat.busy}

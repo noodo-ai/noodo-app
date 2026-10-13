@@ -403,3 +403,30 @@ it('does not append an older page after switching conversations', async () => {
     'other',
   ])
 })
+
+it("uses the resolved run address version when sending a follow-up", async () => {
+  const address = `0x${"a".repeat(40)}`;
+  vi.mocked(sendMessage).mockImplementation(
+    async (_p, _signal, _event, onRun) => {
+      onRun("r");
+      return { ...saved(), observedAddress: address, addressVersion: 2 };
+    },
+  );
+  const { result } = renderHook(() => useAssistant("u"));
+  await waitFor(() => expect(result.current.loading).toBe(false));
+  await act(async () => {
+    await result.current.open("c");
+  });
+  await act(async () => {
+    await result.current.send(`Analyze ${address}`);
+  });
+  await waitFor(() => expect(result.current.busy).toBe(false));
+  expect(result.current.conversation?.observedAddress).toBe(address);
+  await act(async () => {
+    await result.current.send("Recent fills?");
+  });
+  await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2));
+  expect(vi.mocked(sendMessage).mock.calls[1][0].expectedAddressVersion).toBe(
+    2,
+  );
+});

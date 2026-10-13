@@ -1,7 +1,7 @@
 import { hydrate, readPending } from '../history'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRunExecution } from './useRunExecution'
-import { ApiFailure, request } from '../api'
+import { request } from '../api'
 import type { ChatMessage, Conversation, History, Pending } from '../types'
 export function useAssistant(userId: string) {
   const pendingKey = `noodo:pending:${userId}`,
@@ -31,9 +31,20 @@ export function useAssistant(userId: string) {
     const r = await request<{ conversations: Conversation[] }>('/conversations')
     if (mounted.current) setConversations(r.conversations)
   }, [])
+  const resolveAddress = useCallback(
+    (address: string | null, version: number) => {
+      setConversation((current) =>
+        current
+          ? { ...current, observedAddress: address, addressVersion: version }
+          : current,
+      )
+    },
+    [],
+  )
   const { busy, setBusy, busyRef, abortRef, tools, setTools, execute } =
     useRunExecution({
       observedAddress: conversation?.observedAddress ?? null,
+      resolveAddress,
       mounted,
       setMessages,
       setError,
@@ -134,8 +145,7 @@ export function useAssistant(userId: string) {
       loading ||
       busyRef.current ||
       pendingRef.current ||
-      !text.trim() ||
-      text.trim().length > 4000
+      !text.trim()
     )
       return false
     const ticket = ++epoch.current
@@ -190,43 +200,6 @@ export function useAssistant(userId: string) {
     })
     return true
   }
-  const changeAddress = async (address: string | null): Promise<boolean> => {
-    if (loading || busyRef.current || pending) return false
-    setLoading(true)
-    setError('')
-    try {
-      if (!conversation) {
-        const c = await request<Conversation>('/conversations', {
-          method: 'POST',
-          body: JSON.stringify({ observedAddress: address }),
-        })
-        setConversation(c)
-        sessionStorage.setItem(selectedKey, c.id)
-      } else
-        setConversation(
-          await request<Conversation>(`/conversations/${conversation.id}`, {
-            method: 'PATCH',
-            body: JSON.stringify({
-              observedAddress: address,
-              expectedAddressVersion: conversation.addressVersion,
-            }),
-          }),
-        )
-      await refresh()
-      return true
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Account update failed')
-      if (
-        e instanceof ApiFailure &&
-        e.error.code === 'addressVersionConflict' &&
-        conversation
-      )
-        await open(conversation.id)
-      return false
-    } finally {
-      setLoading(false)
-    }
-  }
   const reset = () => {
     if (loading || busyRef.current || pending) return
     epoch.current++
@@ -275,7 +248,6 @@ export function useAssistant(userId: string) {
     pending,
     send,
     open,
-    changeAddress,
     reset,
     loadOlder,
     retry,
