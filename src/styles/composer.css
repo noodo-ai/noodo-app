@@ -25,7 +25,11 @@
 .composer {
   position: relative;
   width: 100%;
-  height: 116px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+  padding-top: 12px;
+  min-height: 116px;
   overflow: hidden;
   border: 1px solid var(--composer-line);
   border-radius: var(--radius-card);
@@ -34,15 +38,15 @@
   transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
 }
 .composer:focus-within { border-color: var(--composer-line-focus); box-shadow: 0 0 0 3px rgba(168, 186, 195, .045), inset 0 1px 0 rgba(255,255,255,.04); }
-.composer textarea { width: 100%; height: 58px; padding: 15px 20px 4px 16px; resize: none; border: 0; outline: 0; background: transparent; color: var(--text); color-scheme: dark; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; font-size: 14px; line-height: 1.55; }
+.composer textarea { width: 100%; min-height: 58px; max-height: min(240px, 40dvh); flex-shrink: 0; overflow-y: hidden; padding: 3px 20px 4px 16px; resize: none; border: 0; outline: 0; background: transparent; color: var(--text); color-scheme: dark; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; font-size: 14px; line-height: 1.55; }
 .composer textarea::-webkit-scrollbar { width: 6px; }
+.composer textarea[data-fade-bottom="true"] { mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
 .composer textarea::-webkit-scrollbar-track { background: transparent; }
 .composer textarea::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--line-strong); }
 .composer textarea::-webkit-scrollbar-corner { background: transparent; }
 .composer textarea::placeholder { color: var(--text-faint); }
-.composer-actions { display: flex; align-items: center; justify-content: space-between; padding: 5px 10px 10px 16px; }
+.composer-actions { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; padding: 0 10px 10px 16px; }
 .composer-attachments { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.composer-file-status { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .composer-tool:disabled { cursor: default; opacity: .4; }
 .composer-tool:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 2px; }
 .composer-tool, .mode-button, .send-button { border: 0; background: transparent; cursor: pointer; }
@@ -85,6 +89,6 @@
 .mock-progress span:nth-child(3) { animation-delay: .32s; }
 @keyframes pulse { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
 .chat-composer { position: absolute; left: 50%; bottom: 22px; width: min(768px, calc(100% - 48px)); transform: translateX(-50%); }
-.composer.compact { height: 88px; border-radius: 20px; }
-.composer.compact textarea { height: 45px; padding-top: 12px; }
-.composer.compact .composer-actions { position: absolute; inset: auto 8px 7px 16px; padding: 0; }
+.composer.compact { min-height: 88px; border-radius: 20px; }
+.composer.compact textarea { min-height: 45px; padding-top: 0; }
+.composer.compact .composer-actions { padding: 0 8px 7px 16px; }

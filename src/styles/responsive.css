@@ -36,10 +36,10 @@
   .hero-center { width: calc(100% - 24px); }
   .home-composer { bottom: 10px; width: calc(100% - 24px); }
   .wordmark { margin-bottom: 24px; font-size: 39px; }
-  .composer { height: 116px; border-radius: 20px; }
-  .composer textarea { padding: 15px 16px 4px 12px; font-size: 14px; }
+  .composer { min-height: 116px; border-radius: 20px; }
+  .composer textarea { padding: 3px 16px 4px 12px; font-size: 14px; }
   .composer-actions { padding-left: 12px; }
-  .composer.compact .composer-actions { left: 12px; }
+  .composer.compact .composer-actions { padding-left: 12px; }
   .send-button { width: 36px; height: 36px; }
   .capabilities { justify-content: center; flex-wrap: nowrap; gap: 8px; padding: 0 2px 6px; overflow-x: auto; scrollbar-width: none; }
   .capabilities::-webkit-scrollbar { display: none; }
@@ -47,7 +47,7 @@
   .chat-view { width: calc(100% - 24px); }
   .user-message span, .assistant-message { max-width: 88%; }
   .chat-composer { bottom: 12px; width: calc(100% - 24px); }
-  .composer.compact { height: 84px; }
+  .composer.compact { min-height: 84px; }
   .right-panel { width: calc(100% - 32px); }
   .right-panel-scroll { padding-inline: 14px; }
 }
