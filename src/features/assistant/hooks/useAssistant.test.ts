@@ -636,3 +636,69 @@ it('settles execution even when navigation refresh is unavailable, and opening a
   expect(result.current.error).toBe('')
   expect(pollRun).not.toHaveBeenCalled()
 })
+
+it('deletes the selected chat, clears its draft, and keeps stale lists from restoring it', async () => {
+  let releaseList!: (value: unknown) => void
+  let listCalls = 0
+  vi.mocked(request).mockImplementation(async (path, init) => {
+    if (path === '/conversations') {
+      if (++listCalls === 1) return new Promise((resolve) => { releaseList = resolve })
+      return { conversations: [conversation] }
+    }
+    if (init?.method === 'DELETE') return { deleted: true }
+    return history()
+  })
+  const { result } = renderHook(() => useAssistant('u'))
+  await act(async () => { await result.current.open('c'); result.current.setInput('draft') })
+  await act(async () => { expect(await result.current.deleteConversation('c')).toBe(true) })
+  expect(result.current.selectedId).toBeNull()
+  expect(sessionStorage.getItem('noodo:selected:u')).toBeNull()
+  await act(async () => { releaseList({ conversations: [conversation] }) })
+  expect(result.current.conversations).toEqual([])
+  await act(async () => { await result.current.open('c') })
+  expect(result.current.selectedId).toBeNull()
+})
+it('preserves a later selection during deletion and retains chats on failure', async () => {
+  let complete!: () => void
+  vi.mocked(request).mockImplementation(async (path, init) => {
+    if (path === '/conversations') return { conversations: [conversation, { ...conversation, id: 'b' }] }
+    if (init?.method === 'DELETE') return new Promise((resolve) => { complete = () => resolve({ deleted: true }) })
+    return history(path.split('/').at(-1))
+  })
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.open('c') })
+  let deletion!: Promise<boolean>
+  act(() => { deletion = result.current.deleteConversation('c') })
+  await act(async () => { await result.current.open('b'); result.current.setInput('keep') })
+  await act(async () => { complete(); await deletion })
+  expect(result.current.selectedId).toBe('b')
+  expect(result.current.input).toBe('keep')
+  vi.mocked(request).mockRejectedValueOnce(new Error('Delete unavailable'))
+  await act(async () => { expect(await result.current.deleteConversation('b')).toBe(false) })
+  expect(result.current.selectedId).toBe('b')
+  expect(result.current.conversations.map((c) => c.id)).toEqual(['b'])
+  expect(result.current.deleteError).toBe('Delete unavailable')
+})
+it('blocks deletion during execution and blocks sending or duplicate deletion while deleting', async () => {
+  let finishRun!: (run: Run) => void
+  vi.mocked(sendMessage).mockImplementation(() => new Promise((resolve) => { finishRun = resolve }))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.open('c'); await result.current.send('test') })
+  await act(async () => { expect(await result.current.deleteConversation('c')).toBe(false) })
+  expect(request).not.toHaveBeenCalledWith('/conversations/c', { method: 'DELETE', body: '{}' })
+  await act(async () => { finishRun(saved()) })
+  await waitFor(() => expect(result.current.busy).toBe(false))
+  let finishDelete!: () => void
+  vi.mocked(request).mockImplementationOnce(() => new Promise((resolve) => { finishDelete = () => resolve({ deleted: true }) }))
+  let task!: Promise<boolean>
+  act(() => { task = result.current.deleteConversation('c') })
+  await act(async () => {
+    expect(await result.current.deleteConversation('c')).toBe(false)
+    expect(await result.current.send('blocked')).toBe(false)
+  })
+  expect(result.current.deletingIds).toEqual(['c'])
+  await act(async () => { finishDelete(); await task })
+  expect(result.current.deletingIds).toEqual([])
+})

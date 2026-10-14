@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { readPendingRequests } from '../history'
 import { useRunExecution } from './useRunExecution'
 import { useConversationState } from './useConversationState'
-import { request } from '../api'
+import { ApiFailure, request } from '../api'
 import type { Conversation, Pending } from '../types'
 
 export function useAssistant(userId: string) {
@@ -15,6 +15,10 @@ export function useAssistant(userId: string) {
   const navigation = useRef(0)
   const mounted = useRef(true)
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const deleted = useRef(new Set<string>())
+  const deletingRef = useRef(new Set<string>())
+  const [deletingIds, setDeletingIds] = useState<string[]>([])
+  const [deleteError, setDeleteError] = useState('')
   const [listError, setListError] = useState('')
   const listRequest = useRef(0)
   const [starting, setStarting] = useState(true)
@@ -24,7 +28,7 @@ export function useAssistant(userId: string) {
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const draftRef = useRef(drafts)
   const [draftError, setDraftError] = useState('')
-  const { states: chats, get, patch, updateMessages, updateError, resolveAddress, invalidate, loadHistory } = useConversationState(mounted)
+  const { states: chats, remove, get, patch, updateMessages, updateError, resolveAddress, invalidate, loadHistory } = useConversationState(mounted)
   const writeDraft = useCallback((id: string | null, text: string) => {
     draftRef.current = { ...draftRef.current, [id ?? 'new-chat']: text }
     setDrafts(draftRef.current)
@@ -67,6 +71,7 @@ export function useAssistant(userId: string) {
     if (mounted.current) setConversations((current) => {
       const byId = new Map(current.map((c) => [c.id, c]))
       for (const c of result.conversations) {
+        if (deleted.current.has(c.id)) continue
         const candidates = [c, byId.get(c.id), get(c.id).conversation].filter((item): item is Conversation => !!item)
         const latest = candidates.reduce((a, b) => b.addressVersion > a.addressVersion || (b.addressVersion === a.addressVersion && b.updatedAt > a.updatedAt) ? b : a)
         byId.set(c.id, latest)
@@ -81,7 +86,7 @@ export function useAssistant(userId: string) {
   const recovering = useRef(new Set<string>())
   const recoverPending = useCallback(async (value: Pending) => {
     const id = value.conversationId
-    if (!mounted.current || isRunning(id) || recovering.current.has(id)) return
+    if (!mounted.current || deleted.current.has(id) || deletingRef.current.has(id) || isRunning(id) || recovering.current.has(id)) return
     recovering.current.add(id)
     try {
       await loadHistory(id)
@@ -93,6 +98,7 @@ export function useAssistant(userId: string) {
     }
   }, [execute, get, isRunning, loadHistory])
   const open = useCallback(async (id: string) => {
+    if (deleted.current.has(id)) return
     select(id)
     await loadHistory(id)
   }, [loadHistory, select])
@@ -132,7 +138,7 @@ export function useAssistant(userId: string) {
 
   const send = async (text: string, consumeDraft = true): Promise<boolean> => {
     const id = selectedId.current
-    if (!text.trim() || (id ? get(id).loading || isRunning(id) || !!pendingRef.current[id] : creatingRef.current)) return false
+    if (!text.trim() || (id ? deleted.current.has(id) || deletingRef.current.has(id) || get(id).loading || isRunning(id) || !!pendingRef.current[id] : creatingRef.current)) return false
     const ticket = navigation.current
     const originalDraft = draftRef.current[id ?? 'new-chat'] ?? ''
     let c = id ? get(id).conversation : null
@@ -165,6 +171,36 @@ export function useAssistant(userId: string) {
     void execute(value)
     return true
   }
+  const deleteConversation = async (id: string): Promise<boolean> => {
+    if (deleted.current.has(id) || deletingRef.current.has(id) || isRunning(id) || recovering.current.has(id)) return false
+    deletingRef.current.add(id)
+    setDeletingIds([...deletingRef.current])
+    setDeleteError('')
+    try {
+      try {
+        await request<{ deleted: boolean }>(`/conversations/${id}`, { method: 'DELETE', body: '{}' })
+      } catch (error) {
+        if (!(error instanceof ApiFailure && error.status === 404)) throw error
+      }
+      if (!mounted.current) return false
+      deleted.current.add(id)
+      remove(id)
+      savePending(id, null)
+      const next = { ...draftRef.current }
+      delete next[id]
+      draftRef.current = next
+      setDrafts(next)
+      setConversations((current) => current.filter((c) => c.id !== id))
+      if (selectedId.current === id) select(null)
+      return true
+    } catch (error) {
+      if (mounted.current) setDeleteError(error instanceof Error ? error.message : 'Could not delete chat')
+      return false
+    } finally {
+      deletingRef.current.delete(id)
+      if (mounted.current) setDeletingIds([...deletingRef.current])
+    }
+  }
   const current = selected ? chats[selected] : null
   const pending = selected ? pendingRequests[selected] ?? null : null
   const retry = () => {
@@ -173,13 +209,18 @@ export function useAssistant(userId: string) {
     if (last) void send(last.text, false)
   }
   return {
+    errorNotifications: [
+      { id: 'draft', message: draftError },
+      ...Object.entries(chats).map(([id, state]) => ({ id: `conversation:${id}`, message: state.error })),
+    ],
+    deleteConversation, deleteError, deletingIds, blockedDeleteIds: Object.keys(states).filter(isRunning),
     conversations, listError, selectedId: selected, conversation: current?.conversation ?? null,
     messages: current?.messages ?? [], loading: selected ? current?.loading ?? true : starting && !navigated,
     error: selected ? current?.error ?? '' : draftError, cursor: current?.cursor ?? null, pending,
     input: drafts[selected ?? 'new-chat'] ?? '', setInput: (text: string) => writeDraft(selectedId.current, text),
     creating: !selected && creating,
     busy: selected ? states[selected]?.busy ?? false : false,
-    executionBusy: creating || Object.values(states).some((state) => state.busy),
+    executionBusy: creating || deletingIds.length > 0 || Object.values(states).some((state) => state.busy),
     tools: selected ? states[selected]?.tools ?? [] : [],
     send, open, newChat: () => select(null), retry,
     loadOlder: async () => { if (selected && get(selected).cursor && !get(selected).loading) await loadHistory(selected, true) },

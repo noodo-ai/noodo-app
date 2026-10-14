@@ -8,6 +8,7 @@ afterEach(cleanup)
 
 const sidebarProps: SidebarProps = {
   expanded: true, preview: false, onPreviewChange: () => {}, onToggle: () => {},
+  onDeleteChat: async () => true, deletingIds: [], blockedDeleteIds: [],
   onNewChat: () => {}, onOpenRecentChat: () => {}, chats: [], activeConversationId: null,
   user: { id: 'u', username: 'User' }, busy: false, onLogout: () => {},
   isResizing: false, width: 240, onStartResize: () => {}, onResizeByKeyboard: () => {},
@@ -41,7 +42,7 @@ it('activates New chat when selecting the draft and deactivates it when selectin
     const [selected, setSelected] = useState<string | null>('a')
     return <Sidebar
       expanded preview={false} onPreviewChange={() => {}} onToggle={() => {}}
-      onNewChat={() => setSelected(null)} onOpenRecentChat={setSelected}
+      onNewChat={() => setSelected(null)} onDeleteChat={async () => true} deletingIds={[]} blockedDeleteIds={[]} onOpenRecentChat={setSelected}
       chats={[{ id: 'a', title: 'Chat A', observedAddress: null, addressVersion: 1, updatedAt: 1 }]}
       activeConversationId={selected} user={{ id: 'u', username: 'User' }}
       busy onLogout={() => {}}

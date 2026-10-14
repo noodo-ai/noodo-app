@@ -14,7 +14,8 @@ import { useAssistant } from '../features/assistant/hooks/useAssistant'
 import { useAuth } from '../features/assistant/hooks/useAuth'
 import { Login } from '../features/assistant/components/Login'
 import type { User } from '../features/assistant/types'
-function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
+import { ToastRegion } from '../shared/components/Toast'
+function Workspace({ user, onLogout, authError }: { user: User; onLogout: () => void; authError: string }) {
   const shellRef = useRef<HTMLDivElement>(null)
   const workspaceRef = useRef<HTMLElement>(null)
   const sidebarToggleRef = useRef<HTMLButtonElement>(null),
@@ -81,6 +82,10 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
         onOpenRecentChat={(id) => {
           void chat.open(id)
         }}
+        onDeleteChat={chat.deleteConversation}
+        deletingIds={chat.deletingIds}
+        blockedDeleteIds={chat.blockedDeleteIds}
+        deleteError={chat.deleteError}
         chats={chat.conversations}
         activeConversationId={chat.selectedId}
         user={user}
@@ -118,12 +123,9 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
               focus(sidebarCollapseRef)
             }}
           />
-          {chat.listError && (
-            <p className="scope-note" role="status">Recent chats unavailable: {chat.listError}</p>
-          )}
           {(chat.error || (chat.pending && !chat.busy)) && (
-            <div className="assistant-error" role={chat.error ? 'alert' : 'status'}>
-              <span>{chat.error || 'A saved request needs recovery before you can send another message.'}</span>
+            <div className="assistant-error" role="status">
+              <span>{chat.pending ? 'A saved request needs recovery before you can send another message.' : 'The request could not be completed. Try again.'}</span>
               {chat.pending ? (
                 <button
                   className="text-action"
@@ -194,6 +196,12 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
           onClose={closePanel}
         />
       </main>
+      <ToastRegion messages={[
+        { id: 'auth', message: authError },
+        { id: 'list', message: chat.listError ? `Recent chats unavailable: ${chat.listError}` : '' },
+        { id: 'delete', message: chat.deleteError },
+        ...chat.errorNotifications,
+      ]} />
     </div>
   )
 }
@@ -205,17 +213,16 @@ export default function App() {
       <Workspace
         key={auth.user.id}
         user={auth.user}
+        authError={auth.error}
         onLogout={() => {
           void auth.logout()
         }}
       />
-      {auth.error && (
-        <div className="logout-error" role="alert">
-          {auth.error}
-        </div>
-      )}
     </>
   ) : (
-    <Login loading={auth.loading} error={auth.error} onLogin={auth.login} />
+    <>
+      <Login loading={auth.loading} onLogin={auth.login} />
+      <ToastRegion messages={[{ id: 'auth', message: auth.error }]} />
+    </>
   )
 }

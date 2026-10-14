@@ -34,6 +34,39 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
+it.each([false, true])('notifies background failures and keeps actions in the original chat (pending=%s)', async pending => {
+  const other = { ...history, id: 'b', title: 'Chat B' }
+  vi.mocked(request).mockImplementation(async path => path === '/conversations'
+    ? { conversations: [history, other] }
+    : path === '/conversations/b' ? other : history)
+  let fail!: () => void
+  vi.mocked(pollRun).mockImplementationOnce(() => new Promise<Run>((resolve, reject) => {
+    fail = () => pending
+      ? reject(new Error('Background connection lost'))
+      : resolve({ ...completed, status: 'failed', result: null, error: { code: 'modelFailed', message: 'Background model failed', retryable: true } })
+  })).mockRejectedValue(new Error('Recovery unavailable'))
+  render(<App />)
+  await waitFor(() => expect(pollRun).toHaveBeenCalledTimes(1))
+  fireEvent.click(screen.getByTitle('Chat B'))
+  await waitFor(() => expect(sessionStorage.getItem('noodo:selected:u')).toBe('b'))
+  await act(async () => { fail() })
+  const message = pending ? 'Background connection lost' : 'Background model failed'
+  expect((await screen.findByRole('alert')).textContent).toBe(message)
+  expect(screen.queryByRole('button', { name: 'Recover saved request' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Retry as new request' })).toBeNull()
+  expect(sessionStorage.getItem('noodo:selected:u')).toBe('b')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }))
+  fireEvent.click(screen.getByTitle('Test'))
+  const action = await screen.findByRole('button', { name: pending ? 'Recover saved request' : 'Retry as new request' })
+  expect((action as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.queryByRole('alert')).toBeNull()
+  fireEvent.click(screen.getByTitle('Chat B'))
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(sendMessage).not.toHaveBeenCalled()
+  expect(pollRun).toHaveBeenCalledTimes(pending ? 2 : 1)
+})
+
 it('keeps recovery accessible after reopening history clears the outage error', async () => {
   let offline = true
   vi.mocked(request).mockImplementation(async path => {

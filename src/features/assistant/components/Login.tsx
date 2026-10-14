@@ -2,11 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { NoodoMark } from '../../../shared/components/NoodoMark'
 export function Login({
   loading,
-  error,
   onLogin,
 }: {
   loading: boolean
-  error: string
   onLogin: (username: string, password: string) => Promise<void>
 }) {
   const [username, setUsername] = useState(''),
@@ -45,11 +43,6 @@ export function Login({
             maxLength={256}
           />
         </label>
-        {error && (
-          <p role="alert" className="inline-error">
-            {error}
-          </p>
-        )}
         <button
           className="primary-action"
           disabled={loading || !username || !password}

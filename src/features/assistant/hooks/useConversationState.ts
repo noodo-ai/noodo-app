@@ -21,10 +21,11 @@ const empty = (): ConversationState => ({
 export function useConversationState(mounted: RefObject<boolean>) {
   const cache = useRef<Record<string, ConversationState>>({})
   const [states, setStates] = useState<Record<string, ConversationState>>({})
+  const removed = useRef(new Set<string>())
   const requests = useRef(new Map<string, Promise<History | null>>())
   const get = useCallback((id: string) => cache.current[id] ?? empty(), [])
   const patch = useCallback((id: string, update: Partial<ConversationState>) => {
-    if (!mounted.current) return
+    if (!mounted.current || removed.current.has(id)) return
     cache.current = { ...cache.current, [id]: { ...get(id), ...update } }
     setStates(cache.current)
   }, [get, mounted])
@@ -42,6 +43,7 @@ export function useConversationState(mounted: RefObject<boolean>) {
     patch(id, { revision: get(id).revision + 1 })
   }, [get, patch])
   const loadHistory = useCallback((id: string, older = false): Promise<History | null> => {
+    if (removed.current.has(id)) return Promise.resolve(null)
     const current = get(id)
     if (!older && current.loaded) return Promise.resolve(null)
     const key = `${id}:${older ? current.cursor : 'latest'}`
@@ -51,7 +53,7 @@ export function useConversationState(mounted: RefObject<boolean>) {
     patch(id, { loading: true, error: '' })
     const task = request<History>(`/conversations/${id}${older ? `?cursor=${encodeURIComponent(current.cursor!)}` : ''}`)
       .then((history) => {
-        if (!mounted.current || get(id).revision !== revision) return null
+        if (!mounted.current || removed.current.has(id) || get(id).revision !== revision) return null
         const latest = get(id)
         const conversation = latest.conversation && latest.conversation.addressVersion > history.addressVersion
           ? latest.conversation : history
@@ -72,5 +74,12 @@ export function useConversationState(mounted: RefObject<boolean>) {
     requests.current.set(key, task)
     return task
   }, [get, mounted, patch, updateError])
-  return { states, get, patch, updateMessages, updateError, resolveAddress, invalidate, loadHistory }
+  const remove = useCallback((id: string) => {
+    removed.current.add(id)
+    const next = { ...cache.current }
+    delete next[id]
+    cache.current = next
+    setStates(next)
+  }, [])
+  return { remove, states, get, patch, updateMessages, updateError, resolveAddress, invalidate, loadHistory }
 }

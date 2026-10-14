@@ -272,3 +272,34 @@
   .sidebar-region.expanded:not(.skip-entrance) .collapse { animation: none; }
   .sidebar-region:not(.skip-entrance) .sidebar.expanded .settings { animation: none; }
 }
+
+.recent-chat-delete:focus-visible { outline: 1px solid var(--text-muted); outline-offset: -3px; border-radius: 6px; }
+.recent-chat-delete:disabled { color: var(--text-faint); cursor: default; }
+@media (hover: none) {
+  .recent-chat-delete { opacity: 1; pointer-events: auto; }
+}
+
+.delete-chat-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-shell);
+  background: var(--raised);
+  color: var(--text);
+}
+.delete-chat-dialog::backdrop { background: rgba(0, 0, 0, .6); }
+.delete-chat-dialog h2 { margin: 0 0 12px; color: var(--text-strong); font-size: 18px; font-weight: 500; }
+.delete-chat-dialog p { margin: 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.delete-chat-dialog strong { font-weight: 500; }
+.delete-chat-dialog .scope-note { margin-top: 12px; }
+.delete-chat-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+.delete-chat-actions button { min-height: 30px; padding: 0 12px; font-size: 13px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--text); cursor: pointer; }
+.delete-chat-actions button:hover { background: var(--hover); }
+.delete-chat-actions .delete-chat-confirm { background: var(--text-strong); color: var(--surface); }
+.delete-chat-actions .delete-chat-confirm:hover { background: var(--text); }
+.delete-chat-actions button:focus-visible { outline: 2px solid var(--text-muted); outline-offset: 3px; }
+.delete-chat-actions button:disabled { opacity: .45; cursor: default; }
+
+@media (pointer: coarse) {
+  .delete-chat-actions button { min-height: 36px; }
+}

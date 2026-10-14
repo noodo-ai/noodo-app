@@ -23,6 +23,10 @@ export interface SidebarProps {
   onToggle: () => void
   onNewChat: () => void
   onOpenRecentChat: (title: string) => void
+  onDeleteChat: (id: string) => Promise<boolean>
+  deletingIds: string[]
+  blockedDeleteIds: string[]
+  deleteError?: string
   chats: Conversation[]
   activeConversationId: string | null
   user: User
@@ -42,6 +46,10 @@ export function Sidebar({
   onToggle,
   onNewChat,
   onOpenRecentChat,
+  onDeleteChat,
+  deletingIds,
+  blockedDeleteIds,
+  deleteError,
   chats,
   activeConversationId,
   user,
@@ -123,6 +131,10 @@ export function Sidebar({
             </button>
           </nav>
           <RecentChats
+            onDeleteChat={onDeleteChat}
+            deletingIds={deletingIds}
+            blockedDeleteIds={blockedDeleteIds}
+            deleteError={deleteError}
             chats={chats}
             activeConversationId={activeConversationId}
             onOpenChat={onOpenRecentChat}
