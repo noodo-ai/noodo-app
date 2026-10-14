@@ -77,7 +77,9 @@ export function ConversationView({
                       <AssistantMarkdown text={message.text} />
                     </>
                   )}
-                  <MessageActions text={message.text} createdAt={message.createdAt} />
+                  {!(busy && message === last) && (
+                    <MessageActions text={message.text} createdAt={message.createdAt} />
+                  )}
                 </div>
               </div>
             )}

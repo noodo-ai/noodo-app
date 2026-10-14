@@ -14,6 +14,8 @@
   .recent-chats h2 { margin-bottom: 6px; }
   .recent-chat-row { grid-template-columns: minmax(0, 1fr) 36px; height: 36px; }
   .recent-chat-delete { width: 36px; opacity: 1; pointer-events: auto; }
+  .recent-chat-loading { right: 36px; width: 36px; }
+  .recent-chat-row.responding .recent-chat-open { padding-right: 36px; }
   .sidebar-foot { height: 50px; padding: 6px; }
   .sidebar-activation-rail { display: none; }
   .sidebar-resizer { display: none; }

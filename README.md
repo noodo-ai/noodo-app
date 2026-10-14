@@ -23,6 +23,8 @@ Conversation selection only changes the displayed view. Each conversation keeps 
 
 Recent chat rows reveal an x delete action on hover or keyboard focus; touch navigation keeps it visible. Clicking x opens a confirmation dialog with Delete and Cancel; Escape cancels. Confirmed deletion clears chat content and returns to New chat when deleting the selected conversation. Active responses must finish before deletion; failures leave the chat available.
 
+Chats generating a response show a spinner on the right of their recent-chat row, including background conversations. Hovering or focusing the row hides the spinner; it disappears when execution ends.
+
 Errors from sign-in, sign-out, requests, recent-chat loading, and deletion appear in dismissible toast notifications, including errors from background conversations. Notifications dismiss after six seconds, pause while hovered or focused, and keep recovery and retry actions available in the original chat. Switching conversations does not redisplay a dismissed notification.
 
 New chat selects a separate unsent draft. Repeated clicks preserve it, and switching away and back preserves each view's input for the current page lifetime. Sending the draft creates a conversation with that first message and prepares a fresh empty draft. If you switch during creation, the new conversation is added to navigation without taking selection back or clearing the other view's input. Drafts are not saved across page reloads.

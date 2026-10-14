@@ -214,6 +214,7 @@ export function useAssistant(userId: string) {
       ...Object.entries(chats).map(([id, state]) => ({ id: `conversation:${id}`, message: state.error })),
     ],
     deleteConversation, deleteError, deletingIds, blockedDeleteIds: Object.keys(states).filter(isRunning),
+    respondingIds: Object.keys(states).filter((id) => states[id].busy),
     conversations, listError, selectedId: selected, conversation: current?.conversation ?? null,
     messages: current?.messages ?? [], loading: selected ? current?.loading ?? true : starting && !navigated,
     error: selected ? current?.error ?? '' : draftError, cursor: current?.cursor ?? null, pending,

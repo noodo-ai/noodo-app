@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DeleteChatDialog } from './DeleteChatDialog'
-import { X } from 'lucide-react'
+import { LoaderCircle, X } from 'lucide-react'
 import type { Conversation } from '../../assistant/types'
 export interface RecentChatsProps {
   chats: Conversation[]
@@ -8,10 +8,11 @@ export interface RecentChatsProps {
   onDeleteChat: (id: string) => Promise<boolean>
   deletingIds?: string[]
   blockedDeleteIds?: string[]
+  respondingIds?: string[]
   deleteError?: string
   onOpenChat: (id: string) => void
 }
-export function RecentChats({ chats, activeConversationId, onOpenChat, onDeleteChat, deletingIds = [], blockedDeleteIds = [], deleteError = '' }: RecentChatsProps) {
+export function RecentChats({ chats, activeConversationId, onOpenChat, onDeleteChat, deletingIds = [], blockedDeleteIds = [], respondingIds = [], deleteError = '' }: RecentChatsProps) {
   const [deleteTarget, setDeleteTarget] = useState<Conversation | null>(null)
   return (
     <section className="recent-chats" aria-labelledby="recent-chats-heading">
@@ -20,7 +21,7 @@ export function RecentChats({ chats, activeConversationId, onOpenChat, onDeleteC
         <p className="scope-note">Your chats will appear here.</p>
       )}
       {chats.map((chat) => (
-        <div aria-busy={deletingIds.includes(chat.id)} className={`recent-chat-row ${chat.id === activeConversationId ? 'active' : ''}`} key={chat.id}>
+        <div aria-busy={deletingIds.includes(chat.id) || respondingIds.includes(chat.id)} className={`recent-chat-row ${chat.id === activeConversationId ? 'active' : ''} ${respondingIds.includes(chat.id) ? 'responding' : ''}`} key={chat.id}>
           <button
             className="recent-chat-open"
             type="button"
@@ -30,6 +31,11 @@ export function RecentChats({ chats, activeConversationId, onOpenChat, onDeleteC
           >
             <span className="recent-chat-label">{chat.title}</span>
           </button>
+          {respondingIds.includes(chat.id) && (
+            <span className="recent-chat-loading" role="status" aria-label={`Responding: ${chat.title}`}>
+              <LoaderCircle size={14} strokeWidth={1.65} aria-hidden="true" />
+            </span>
+          )}
           <button
             className="recent-chat-delete"
             type="button"

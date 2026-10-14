@@ -26,6 +26,7 @@ export interface SidebarProps {
   onDeleteChat: (id: string) => Promise<boolean>
   deletingIds: string[]
   blockedDeleteIds: string[]
+  respondingIds?: string[]
   deleteError?: string
   chats: Conversation[]
   activeConversationId: string | null
@@ -49,6 +50,7 @@ export function Sidebar({
   onDeleteChat,
   deletingIds,
   blockedDeleteIds,
+  respondingIds,
   deleteError,
   chats,
   activeConversationId,
@@ -134,6 +136,7 @@ export function Sidebar({
             onDeleteChat={onDeleteChat}
             deletingIds={deletingIds}
             blockedDeleteIds={blockedDeleteIds}
+            respondingIds={respondingIds}
             deleteError={deleteError}
             chats={chats}
             activeConversationId={activeConversationId}

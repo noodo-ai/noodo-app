@@ -85,6 +85,7 @@ function Workspace({ user, onLogout, authError }: { user: User; onLogout: () => 
         onDeleteChat={chat.deleteConversation}
         deletingIds={chat.deletingIds}
         blockedDeleteIds={chat.blockedDeleteIds}
+        respondingIds={chat.respondingIds}
         deleteError={chat.deleteError}
         chats={chat.conversations}
         activeConversationId={chat.selectedId}
