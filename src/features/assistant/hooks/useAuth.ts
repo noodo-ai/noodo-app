@@ -3,15 +3,21 @@ import { ApiFailure, request } from '../api'
 import type { User } from '../types'
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null),
+    [initializing, setInitializing] = useState(true),
     [loading, setLoading] = useState(true),
     [error, setError] = useState('')
   useEffect(() => {
     const abort = new AbortController()
     request<{ user: User }>('/auth/me', { signal: abort.signal })
-      .then((r) => setUser(r.user))
+      .then((r) => {
+        if (!abort.signal.aborted) setUser(r.user)
+      })
       .catch(() => {})
       .finally(() => {
-        if (!abort.signal.aborted) setLoading(false)
+        if (!abort.signal.aborted) {
+          setInitializing(false)
+          setLoading(false)
+        }
       })
     return () => abort.abort()
   }, [])
@@ -43,5 +49,5 @@ export function useAuth() {
       else setError(e instanceof Error ? e.message : 'Sign out failed')
     }
   }
-  return { user, loading, error, login, logout }
+  return { user, initializing, loading, error, login, logout }
 }

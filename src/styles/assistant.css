@@ -10,8 +10,22 @@ button:disabled { cursor: default; }
 .primary-action:disabled, .text-action:disabled, .send-button:disabled, .assistant-examples button:disabled { opacity: .45; }
 .scope-note { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .text-action { padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--text); background: transparent; cursor: pointer; font-size: 12px; }
+.conversation-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% - 48px);
+  margin: 0;
+  transform: translate(-50%, -50%);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.6;
+  letter-spacing: .01em;
+  text-align: center;
+  pointer-events: none;
+}
 .assistant-surface { display: flex; flex-direction: column; min-width: 0; }
-.assistant-toolbar { display: none; width: min(820px, calc(100% - 48px)); margin: 10px auto 0; flex-shrink: 0; }
 .assistant-error { width: min(820px, calc(100% - 48px)); margin: 10px auto 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; display: flex; gap: 12px; align-items: center; font-size: 13px; flex-shrink: 0; }
 .assistant-error span { flex: 1; min-width: 0; }
 .assistant-chat { width: 100%; height: auto; min-height: 0; flex: 1; display: flex; flex-direction: column; padding-bottom: 0; }
@@ -85,15 +99,13 @@ button:disabled { cursor: default; }
 .assistant-examples button { border: 1px solid var(--line); border-radius: var(--radius-item); background: transparent; color: var(--text-muted); padding: 12px; font-size: 12px; text-align: left; cursor: pointer; transition: background var(--ease); }
 .assistant-examples button:hover { background: var(--hover); color: var(--text); }
 .assistant-surface .hero { flex: 1; min-height: 0; overflow-y: auto; }
-.mobile-signout { display: none; }
 .logout-error { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px; background: var(--raised); border: 1px solid var(--line); z-index: 99; }
 @media (max-width: 900px) {
-  .assistant-toolbar { display: block; margin-top: 60px; }
+  .assistant-surface { padding-top: 54px; }
   .assistant-chat { padding-top: 0; }
-  .mobile-signout { display: block; margin: 8px 0; }
 }
 @media (max-width: 600px) {
-  .assistant-toolbar, .assistant-error, .messages-content, .assistant-chat .chat-composer { width: calc(100% - 24px); }
+  .assistant-error, .messages-content, .assistant-chat .chat-composer { width: calc(100% - 24px); }
   .assistant-examples { grid-template-columns: 1fr; gap: 6px; margin: 16px auto; }
   .assistant-examples button { padding: 10px; }
   .assistant-chat .assistant-message { max-width: 100%; }

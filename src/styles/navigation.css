@@ -103,7 +103,7 @@
 }
 .icon-button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 10px; color: var(--text-muted); }
 .sidebar .icon-button { width: 32px; height: 32px; border-radius: 9px; }
-.collapse { position: absolute; z-index: 6; top: 5px; right: 8px; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 10px; opacity: 0; }
+.collapse { position: absolute; z-index: 6; top: 5px; right: 8px; width: 36px; height: 36px; flex: 0 0 auto; border-radius: 10px; }
 .panel-icon { display: grid; place-items: center; grid-area: 1 / 1; transition: opacity 140ms ease-out, transform 160ms ease-out; }
 .panel-icon-action { opacity: 0; transform: scale(.88); }
 .collapse:hover .panel-icon-default, .collapse:focus-visible .panel-icon-default,
@@ -132,7 +132,7 @@
   cursor: pointer;
   transition: color var(--ease), border-color var(--ease);
 }
-.nav-item-new-chat, .nav-item-farm { height: 32px; }
+.nav-item-new-chat { height: 32px; border-radius: 9px; }
 .nav-item::before {
   position: absolute;
   inset: 0;
@@ -164,15 +164,12 @@
 }
 .nav-item:hover, .nav-item:focus-visible { color: var(--text); }
 .nav-item:hover::before, .nav-item:focus-visible::before, .nav-item.active::before { opacity: 1; }
-.nav-item-new-chat:hover > svg, .nav-item-new-chat:focus-visible > svg { transform: scaleX(-1); }
-.nav-item-farm:hover > svg, .nav-item-farm:focus-visible > svg { animation: tractor-rattle 360ms ease-in-out; }
-@keyframes tractor-rattle {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0); }
-  20% { transform: translate3d(-1px, 0, 0) rotate(-2deg); }
-  40% { transform: translate3d(1px, -1px, 0) rotate(2deg); }
-  60% { transform: translate3d(-1px, 0, 0) rotate(-1deg); }
-  80% { transform: translate3d(1px, 0, 0) rotate(1deg); }
-}
+.new-chat-icon { display: grid; width: 17px; height: 17px; flex: 0 0 17px; }
+.new-chat-icon svg { grid-area: 1 / 1; transition: opacity var(--ease), transform var(--ease); }
+.nav-item-new-chat:hover .new-chat-icon svg, .nav-item-new-chat:focus-visible .new-chat-icon svg { transform: scaleX(-1); }
+.new-chat-icon-hover { opacity: 0; }
+.nav-item-new-chat:hover .new-chat-icon-default, .nav-item-new-chat:focus-visible .new-chat-icon-default { opacity: 0; }
+.nav-item-new-chat:hover .new-chat-icon-hover, .nav-item-new-chat:focus-visible .new-chat-icon-hover { opacity: 1; }
 .nav-item.active { border-color: var(--line); color: var(--text-strong); }
 .nav-group { display: grid; gap: 1px; }
 .recent-chats { min-width: 0; margin-top: 32px; }
@@ -252,10 +249,10 @@
 .profile:hover, .profile:focus-visible { background: var(--hover); }
 .avatar { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 50%; background: #252524; color: var(--text); font-size: 10px; }
 .profile-name { color: var(--text); font-size: 12px; }
-.settings { position: absolute; right: 2px; flex: 0 0 auto; opacity: 0; transition: background-color 180ms ease-out, color 180ms ease-out; }
+.settings { position: absolute; right: 2px; flex: 0 0 auto; transition: background-color 180ms ease-out, color 180ms ease-out; }
 .settings:hover, .settings:focus-visible { background: var(--hover); color: var(--text); }
-.sidebar-region.expanded .collapse { animation: sidebar-collapse-in var(--panel-motion) both; }
-.sidebar.expanded .settings { animation: sidebar-action-in 120ms ease-out 100ms both; }
+.sidebar-region.expanded:not(.skip-entrance) .collapse { animation: sidebar-collapse-in var(--panel-motion) both; }
+.sidebar-region:not(.skip-entrance) .sidebar.expanded .settings { animation: sidebar-action-in 120ms ease-out 100ms both; }
 @keyframes sidebar-collapse-in {
   0% { opacity: 0; transform: translate3d(calc(var(--sidebar-width) * -1), 0, 0); }
   45% { opacity: 0; }
@@ -270,7 +267,8 @@
   .noodo-mark.glint-forward .noodo-mark-glint,
   .noodo-mark.glint-reverse .noodo-mark-glint { animation: none; }
   .nav-item > svg { transition: none; }
-  .nav-item-new-chat:hover > svg, .nav-item-new-chat:focus-visible > svg,
-  .nav-item-farm:hover > svg, .nav-item-farm:focus-visible > svg { animation: none; transform: none; }
-  .sidebar-region.expanded .collapse { animation: none; opacity: 1; }
+  .new-chat-icon svg { transition: none; }
+  .nav-item-new-chat:hover .new-chat-icon svg, .nav-item-new-chat:focus-visible .new-chat-icon svg { transform: none; }
+  .sidebar-region.expanded:not(.skip-entrance) .collapse { animation: none; }
+  .sidebar-region:not(.skip-entrance) .sidebar.expanded .settings { animation: none; }
 }

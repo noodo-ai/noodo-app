@@ -24,6 +24,7 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
     panelCloseRef = useRef<HTMLButtonElement>(null)
   const { sidebar, panel, composer } = useWorkspaceController(),
     chat = useAssistant(user.id)
+  const showConversationLoading = chat.loading && !chat.messages.length
   const appShellWidth = () => shellRef.current?.clientWidth
   const focus = (target: RefObject<HTMLButtonElement | null>) =>
     window.requestAnimationFrame(() => target.current?.focus())
@@ -85,8 +86,6 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
         user={user}
         busy={chat.executionBusy || !!chat.pending || chat.loading}
         onLogout={onLogout}
-        activePanel={panel.open ? panel.view : null}
-        onSelectPanel={(view) => panel.select(view, appShellWidth())}
         isResizing={sidebar.isResizing}
         width={sidebar.width}
         onStartResize={sidebar.startResizing}
@@ -119,15 +118,6 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
               focus(sidebarCollapseRef)
             }}
           />
-          <div className="assistant-toolbar">
-            <button
-              className="text-action mobile-signout"
-              disabled={chat.executionBusy}
-              onClick={onLogout}
-            >
-              Sign out
-            </button>
-          </div>
           {chat.listError && (
             <p className="scope-note" role="status">Recent chats unavailable: {chat.listError}</p>
           )}
@@ -156,8 +146,8 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
           {chat.creating && (
             <p className="scope-note" role="status">Creating conversation…</p>
           )}
-          {chat.loading && (
-            <p className="scope-note" role="status">
+          {showConversationLoading && (
+            <p className="conversation-loading" role="status">
               Loading conversation…
             </p>
           )}
@@ -177,7 +167,7 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
                 <Composer compact {...composerProps} />
               </div>
             </section>
-          ) : (
+          ) : !chat.loading && (
             <HomeHero {...composerProps} />
           )}
         </section>
@@ -199,6 +189,7 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
           closeButtonRef={panelCloseRef}
           open={panel.open}
           activeView={panel.view}
+          onBack={panel.showOverview}
           onSelect={(view) => panel.select(view, appShellWidth())}
           onClose={closePanel}
         />
@@ -208,6 +199,7 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
 }
 export default function App() {
   const auth = useAuth()
+  if (auth.initializing) return null
   return auth.user ? (
     <>
       <Workspace

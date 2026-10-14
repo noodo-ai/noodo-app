@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useRef, type Ref } from 'react'
+import { useCallback, useEffect, useRef, useState, type Ref } from 'react'
 import {
   PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
-  Sprout,
+  Sparkle,
+  Sparkles,
   LogOut,
 } from 'lucide-react'
 import { NoodoMark } from '../../../shared/components/NoodoMark'
 import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
 import { ResizeHandle } from '../../../shared/components/ResizeHandle'
 import type { Conversation, User } from '../../assistant/types'
-import { panelViews } from '../../workspace-panel/data'
-import type { RightPanelView } from '../../workspace-panel/types'
 import { MAX_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH } from '../resize'
 import { RecentChats } from './RecentChats'
 
@@ -29,8 +28,6 @@ export interface SidebarProps {
   user: User
   busy: boolean
   onLogout: () => void
-  activePanel: RightPanelView | null
-  onSelectPanel: (panel: RightPanelView) => void
   isResizing: boolean
   width: number
   onStartResize: () => void
@@ -50,8 +47,6 @@ export function Sidebar({
   user,
   busy,
   onLogout,
-  activePanel,
-  onSelectPanel,
   isResizing,
   width,
   onStartResize,
@@ -59,6 +54,9 @@ export function Sidebar({
   collapseButtonRef,
 }: SidebarProps) {
   const visible = expanded || preview
+  const [skipEntrance, setSkipEntrance] = useState(visible)
+  // A restored sidebar starts at rest. Later openings retain their entrance motion.
+  if (skipEntrance && !visible) setSkipEntrance(false)
   const previewTimer = useRef<number | null>(null)
   const clearPreviewTimer = useCallback(() => {
     if (previewTimer.current === null) return
@@ -82,7 +80,7 @@ export function Sidebar({
 
   return (
     <div
-      className={`sidebar-region ${visible ? 'expanded' : ''}`}
+      className={`sidebar-region ${visible ? 'expanded' : ''} ${skipEntrance ? 'skip-entrance' : ''}`}
       onPointerLeave={stopPreview}
     >
       <div
@@ -117,23 +115,12 @@ export function Sidebar({
               aria-current={activeConversationId === null ? 'page' : undefined}
               onClick={onNewChat}
             >
-              <Sprout size={17} strokeWidth={1.65} />
+              <span className="new-chat-icon" aria-hidden="true">
+                <Sparkle className="new-chat-icon-default" size={17} strokeWidth={1.65} />
+                <Sparkles className="new-chat-icon-hover" size={17} strokeWidth={1.65} />
+              </span>
               <span>New chat</span>
             </button>
-            {panelViews.map(({ id, label, Icon }) => (
-              <button
-                type="button"
-                key={id}
-                className={`nav-item nav-item-${id} ${activePanel === id ? 'active' : ''}`}
-                aria-label={label}
-                data-tooltip={label}
-                aria-pressed={activePanel === id}
-                onClick={() => onSelectPanel(id)}
-              >
-                <Icon size={17} strokeWidth={1.65} />
-                <span>{label}</span>
-              </button>
-            ))}
           </nav>
           <RecentChats
             chats={chats}

@@ -1,4 +1,4 @@
-import { Tractor } from 'lucide-react'
+import { Activity, ScanBox } from 'lucide-react'
 import type { IconType } from '../../shared/types/icon'
 import type { RightPanelView } from './types'
 
@@ -9,5 +9,6 @@ export interface PanelViewDefinition {
 }
 
 export const panelViews: PanelViewDefinition[] = [
-  { id: 'farm', label: 'Farm', Icon: Tractor },
+  { id: 'trends', label: 'Trends', Icon: Activity },
+  { id: 'resources', label: 'Resources', Icon: ScanBox },
 ]

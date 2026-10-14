@@ -1,1 +1,1 @@
-export type RightPanelView = 'farm'
+export type RightPanelView = 'trends' | 'resources'

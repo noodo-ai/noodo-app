@@ -15,7 +15,9 @@ Vite proxies `/v1` to `http://127.0.0.1:3001`, preserves Origin and cookies, and
 
 ## Features and recovery
 
-The app supports sign-in, structured history, account selection with version checks, tool progress, streamed explanations, and market, position, fill, and source cards. Unknown values stay unknown; amounts retain decimal precision. Farm navigation and the resizable right panel remain available. Unimplemented modes, attachments, and mock recent chats are hidden.
+On startup, the app shows only its plain background until the session check completes, then displays the workspace or sign-in form without flashing the form for signed-in users.
+
+The app supports sign-in, structured history, account selection with version checks, tool progress, streamed explanations, and market, position, fill, and source cards. Unknown values stay unknown; amounts retain decimal precision. The resizable right panel provides Trends and Resources navigation, with a shared back button to return to its overview. Both panels' widths, the left sidebar's pinned expansion, and the right panel's open state are saved locally in the browser across reloads; temporary sidebar hover previews are not saved. Restored widths are constrained to the available desktop space. Unimplemented modes, attachments, and mock recent chats are hidden.
 
 Conversation selection only changes the displayed view. Each conversation keeps its own messages, progress, errors, execution state, and unsent input; background conversations continue generating while you switch. The first visit loads uncached history, and stale responses cannot replace newer execution results or account versions.
 

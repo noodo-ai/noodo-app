@@ -8,30 +8,28 @@ export interface PanelOverviewProps {
 }
 
 export function PanelOverview({ onSelect, enabled }: PanelOverviewProps) {
-  const farm = panelViews.find(({ id }) => id === 'farm')
-
   useEffect(() => {
     if (!enabled) return
 
-    const openFarm = (event: KeyboardEvent) => {
-      if (event.altKey && event.key === '1' && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
-        event.preventDefault()
-        onSelect('farm')
-      }
+    const openPanel = (event: KeyboardEvent) => {
+      if (!event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return
+      const view = panelViews.find((_, index) => event.key === String(index + 1))
+      if (!view) return
+      event.preventDefault()
+      onSelect(view.id)
     }
-    window.addEventListener('keydown', openFarm)
-    return () => window.removeEventListener('keydown', openFarm)
+    window.addEventListener('keydown', openPanel)
+    return () => window.removeEventListener('keydown', openPanel)
   }, [enabled, onSelect])
 
-  if (!farm) return null
-  const FarmIcon = farm.Icon
-
   return (
-    <div className="panel-overview">
-      <button type="button" className="panel-launch" onClick={() => onSelect(farm.id)} aria-keyshortcuts="Alt+1">
-        <span><FarmIcon size={18} strokeWidth={1.6} />{farm.label}</span>
-        <kbd>⌥1</kbd>
-      </button>
-    </div>
+    <nav className="panel-overview" aria-label="Workspace pages">
+      {panelViews.map(({ id, label, Icon }, index) => (
+        <button type="button" key={id} className={`panel-launch panel-launch-${id}`} onClick={() => onSelect(id)} aria-keyshortcuts={`Alt+${index + 1}`}>
+          <span><Icon size={18} strokeWidth={1.6} />{label}</span>
+          <kbd>⌥{index + 1}</kbd>
+        </button>
+      ))}
+    </nav>
   )
 }

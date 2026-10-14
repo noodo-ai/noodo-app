@@ -1,13 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { usePointerResizeSession } from '../../../shared/hooks/usePointerResizeSession'
 import {
-  DEFAULT_SIDEBAR_WIDTH,
   resolveSidebarKeyboardResize,
   resolveSidebarPointerResize,
 } from '../resize'
 
-export function useResizableSidebar(onCollapse: () => void) {
-  const [width, setWidth] = useState(DEFAULT_SIDEBAR_WIDTH)
+export function useResizableSidebar(onCollapse: () => void, width: number, setWidth: (width: number) => void) {
   const handlePointerMove = useCallback((event: PointerEvent, stop: () => void) => {
     const next = resolveSidebarPointerResize(event.clientX, window.innerWidth)
     setWidth(next.width)
@@ -15,7 +13,7 @@ export function useResizableSidebar(onCollapse: () => void) {
       stop()
       onCollapse()
     }
-  }, [onCollapse])
+  }, [onCollapse, setWidth])
   const resizeSession = usePointerResizeSession(handlePointerMove)
 
   const resizeByKeyboard = (direction: 'wider' | 'narrower') => {

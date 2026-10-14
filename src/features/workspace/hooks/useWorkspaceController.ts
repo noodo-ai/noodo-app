@@ -2,12 +2,15 @@ import { useCallback, useState } from 'react'
 import type { ComposerMode } from '../../composer/types'
 import { useResizableSidebar } from '../../navigation/hooks/useResizableSidebar'
 import { useResizablePanel } from '../../workspace-panel/hooks/useResizablePanel'
+import { MIN_PANEL_WIDTH, getPanelMaximum } from '../../workspace-panel/resize'
 import type { RightPanelView } from '../../workspace-panel/types'
+import { useWorkspaceLayoutPreferences } from './useWorkspaceLayoutPreferences'
 
 export function useWorkspaceController() {
-  const [sidebarExpanded, setSidebarExpanded] = useState(false)
+  const { sidebarExpanded, setSidebarExpanded, rightPanelOpen, setRightPanelOpen,
+    sidebarWidth, setSidebarWidth, rightPanelWidth, setRightPanelWidth } =
+    useWorkspaceLayoutPreferences()
   const [sidebarPreview, setSidebarPreview] = useState(false)
-  const [rightPanelOpen, setRightPanelOpen] = useState(false)
   const [rightPanelView, setRightPanelView] = useState<RightPanelView | null>(
     null,
   )
@@ -15,16 +18,17 @@ export function useWorkspaceController() {
   const collapseSidebar = useCallback(() => {
     setSidebarExpanded(false)
     setSidebarPreview(false)
-  }, [])
-  const sidebarResize = useResizableSidebar(collapseSidebar)
-  const panel = useResizablePanel()
+  }, [setSidebarExpanded])
+  const sidebarResize = useResizableSidebar(collapseSidebar, sidebarWidth, setSidebarWidth)
+  const panel = useResizablePanel(rightPanelWidth, setRightPanelWidth)
 
   const openRightPanel = (appShellWidth?: number) => {
-    if (!rightPanelOpen && window.innerWidth > 900 && appShellWidth) {
+    if (!rightPanelOpen && window.innerWidth > 900) {
       const sidebarMargin =
         sidebarExpanded || sidebarPreview ? sidebarResize.width + 6 : 0
-      const workspaceWidth = appShellWidth - 12 - sidebarMargin
-      panel.setWidth(Math.max(280, (workspaceWidth - 6) / 2))
+      const workspaceWidth = (appShellWidth ?? window.innerWidth) - 12 - sidebarMargin
+      const preferredWidth = rightPanelWidth ?? (workspaceWidth - 6) / 2
+      panel.setWidth(Math.max(MIN_PANEL_WIDTH, Math.min(getPanelMaximum(workspaceWidth - 6), preferredWidth)))
     }
     setRightPanelOpen(true)
   }
@@ -61,6 +65,7 @@ export function useWorkspaceController() {
       view: rightPanelView,
       openPanel: openRightPanel,
       select: selectRightPanel,
+      showOverview: () => setRightPanelView(null),
       close: () => setRightPanelOpen(false),
     },
     composer: { mode, setMode },
