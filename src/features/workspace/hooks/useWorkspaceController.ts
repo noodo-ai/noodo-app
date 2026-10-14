@@ -11,7 +11,6 @@ export function useWorkspaceController() {
   const [rightPanelView, setRightPanelView] = useState<RightPanelView | null>(
     null,
   )
-  const [input, setInput] = useState('')
   const [mode, setMode] = useState<ComposerMode>('Hyperliquid')
   const collapseSidebar = useCallback(() => {
     setSidebarExpanded(false)
@@ -64,6 +63,6 @@ export function useWorkspaceController() {
       select: selectRightPanel,
       close: () => setRightPanelOpen(false),
     },
-    composer: { input, mode, setInput, setMode },
+    composer: { mode, setMode },
   }
 }

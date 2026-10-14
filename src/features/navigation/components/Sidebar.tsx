@@ -22,9 +22,10 @@ export interface SidebarProps {
   preview: boolean
   onPreviewChange: (value: boolean) => void
   onToggle: () => void
-  onReset: () => void
+  onNewChat: () => void
   onOpenRecentChat: (title: string) => void
   chats: Conversation[]
+  activeConversationId: string | null
   user: User
   busy: boolean
   onLogout: () => void
@@ -42,9 +43,10 @@ export function Sidebar({
   preview,
   onPreviewChange,
   onToggle,
-  onReset,
+  onNewChat,
   onOpenRecentChat,
   chats,
+  activeConversationId,
   user,
   busy,
   onLogout,
@@ -100,7 +102,7 @@ export function Sidebar({
             className="brand-button"
             type="button"
             aria-label="Start a new chat"
-            onClick={onReset}
+            onClick={onNewChat}
           >
             <NoodoMark label="NOODO" />
           </button>
@@ -110,10 +112,10 @@ export function Sidebar({
           <nav className="nav-group" aria-label="Primary navigation">
             <button
               type="button"
-              className="nav-item nav-item-new-chat"
+              className={`nav-item nav-item-new-chat ${activeConversationId === null ? 'active' : ''}`}
               aria-label="New chat"
-              disabled={busy}
-              onClick={onReset}
+              aria-current={activeConversationId === null ? 'page' : undefined}
+              onClick={onNewChat}
             >
               <Sprout size={17} strokeWidth={1.65} />
               <span>New chat</span>
@@ -135,7 +137,7 @@ export function Sidebar({
           </nav>
           <RecentChats
             chats={chats}
-            disabled={busy}
+            activeConversationId={activeConversationId}
             onOpenChat={onOpenRecentChat}
           />
         </div>

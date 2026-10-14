@@ -36,9 +36,9 @@ const saved = (id = 'r'): Run => ({
 beforeEach(() => {
   sessionStorage.clear()
   vi.clearAllMocks()
-  vi.mocked(request).mockImplementation(async (path) =>
+  vi.mocked(request).mockImplementation(async (path, init) =>
     path === '/conversations'
-      ? { conversations: [] }
+      ? init?.method === 'POST' ? conversation : { conversations: [] }
       : ({
           ...conversation,
           messages: [],
@@ -82,93 +82,32 @@ const history = (
   nextCursor,
   activeRunId: null,
 })
-it.each(['list', 'history'])(
-  'retains the original request through a %s restoration outage and manual recovery',
-  async (outage) => {
-    const original = {
-      conversationId: 'c',
-      clientRequestId: 'original',
-      text: 'first',
-      expectedAddressVersion: 1,
-      createdAt: Date.now(),
-    }
-    sessionStorage.setItem('noodo:pending:u', JSON.stringify(original))
-    let unavailable = true
-    vi.mocked(request).mockImplementation(async (path) => {
-      if (
-        unavailable &&
-        path === (outage === 'list' ? '/conversations' : '/conversations/c')
-      )
-        throw new Error('temporary outage')
-      return path === '/conversations' ? { conversations: [] } : history()
-    })
-    const { result } = renderHook(() => useAssistant('u'))
-    expect(result.current.pending?.clientRequestId).toBe('original')
-    await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.error).toBe('temporary outage')
-    expect(result.current.pending).toEqual(original)
-    await act(async () => {
-      expect(await result.current.send('new request')).toBe(false)
-      await result.current.open('another')
-    })
-    expect(sendMessage).not.toHaveBeenCalled()
-    expect(JSON.parse(sessionStorage.getItem('noodo:pending:u')!)).toEqual(
-      original,
-    )
-    unavailable = false
-    await act(async () => {
-      result.current.recover()
-    })
-    await waitFor(() => expect(result.current.pending).toBeNull())
-    expect(vi.mocked(sendMessage).mock.calls[0][0]).toEqual(original)
-    expect(result.current.conversation?.id).toBe('c')
-    expect(sessionStorage.getItem('noodo:selected:u')).toBe('c')
-    expect(result.current.messages.at(-1)?.text).toBe('saved')
-  },
-)
-it.each(['open', 'reset', 'send'])(
-  'ignores an old post-send history response after %s',
-  async (action) => {
-    let resolveOld!: (h: History) => void
-    const old = new Promise<History>((resolve) => {
-      resolveOld = resolve
-    })
-    let historyRequests = 0
-    vi.mocked(request).mockImplementation(async (path, init) => {
-      if (path === '/conversations')
-        return init?.method === 'POST' ? conversation : { conversations: [] }
-      if (path === '/conversations/c' && ++historyRequests === 1) return old
-      return history(action === 'open' ? 'b' : 'c', 'new', 'new-cursor')
-    })
-    const { result } = renderHook(() => useAssistant('u'))
-    await waitFor(() => expect(result.current.loading).toBe(false))
-    await act(async () => {
-      await result.current.send('first')
-    })
-    await waitFor(() =>
-      expect(request).toHaveBeenCalledWith('/conversations/c'),
-    )
-    await act(async () => {
-      if (action === 'open') await result.current.open('b')
-      else if (action === 'reset') result.current.reset()
-      else await result.current.send('second')
-    })
-    await waitFor(() => expect(result.current.busy).toBe(false))
-    if (action !== 'reset')
-      await waitFor(() => expect(result.current.messages[0].text).toBe('new'))
-    await act(async () => {
-      resolveOld(history('c', 'old', 'old-cursor'))
-      await old
-    })
-    expect(result.current.conversation?.id ?? null).toBe(
-      action === 'reset' ? null : action === 'open' ? 'b' : 'c',
-    )
-    expect(result.current.messages.map((m) => m.text)).toEqual(
-      action === 'reset' ? [] : ['new'],
-    )
-    expect(result.current.cursor).toBe(action === 'reset' ? null : 'new-cursor')
-  },
-)
+it('retains the original request through a history outage and manual recovery without navigating', async () => {
+  const original = { conversationId: 'c', clientRequestId: 'original', text: 'first', expectedAddressVersion: 1, createdAt: Date.now() }
+  sessionStorage.setItem('noodo:pending:u', JSON.stringify(original))
+  let unavailable = true
+  vi.mocked(request).mockImplementation(async (path) => {
+    if (path === '/conversations') return { conversations: [] }
+    if (unavailable && path === '/conversations/c') throw new Error('temporary outage')
+    return history(path.split('/').at(-1))
+  })
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  expect(result.current.error).toBe('temporary outage')
+  expect(result.current.pending).toEqual(original)
+  await act(async () => { expect(await result.current.send('new request')).toBe(false); await result.current.open('another') })
+  expect(sendMessage).not.toHaveBeenCalled()
+  unavailable = false
+  await act(async () => { await result.current.open('c') })
+  expect(sendMessage).not.toHaveBeenCalled()
+  await act(async () => { result.current.recover(); result.current.recover(); result.current.newChat() })
+  await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(sendMessage).mock.calls[0][0]).toEqual(original)
+  expect(result.current.conversation).toBeNull()
+  expect(sessionStorage.getItem('noodo:selected:u')).toBeNull()
+  await act(async () => { await result.current.open('c') })
+  expect(result.current.messages.at(-1)?.text).toBe('saved')
+})
 it('clears the durable request after completion and supports consecutive sends', async () => {
   const { result } = renderHook(() => useAssistant('u'))
   await waitFor(() => expect(result.current.loading).toBe(false))
@@ -370,7 +309,7 @@ it('replaces interrupted deltas with the saved run instead of appending during r
   expect(result.current.messages.at(-1)?.textStatus).toBe('partial')
 })
 
-it('does not append an older page after switching conversations', async () => {
+it('updates paginated history in its own cache after switching conversations', async () => {
   let resolvePage!: (value: History) => void
   const page = new Promise<History>((resolve) => {
     resolvePage = resolve
@@ -402,6 +341,9 @@ it('does not append an older page after switching conversations', async () => {
   expect(result.current.messages.map((message) => message.text)).toEqual([
     'other',
   ])
+  await act(async () => { await result.current.open('c') })
+  expect(result.current.messages.map((message) => message.text)).toEqual(['old message', 'latest'])
+  expect(result.current.cursor).toBeNull()
 })
 
 it("uses the resolved run address version when sending a follow-up", async () => {
@@ -430,3 +372,267 @@ it("uses the resolved run address version when sending a follow-up", async () =>
     2,
   );
 });
+
+it('runs conversations independently while switching and keeps live replies in their original chat', async () => {
+  const a = { ...conversation, id: 'a', title: 'Chat A' }
+  const b = { ...conversation, id: 'b', title: 'Chat B' }
+  const streams = new Map<string, {
+    emit: Parameters<typeof sendMessage>[2]
+    finish: (run: Run) => void
+    signal: AbortSignal
+  }>()
+  vi.mocked(request).mockImplementation(async (path) => {
+    if (path === '/conversations') return { conversations: [a, b] }
+    return { ...history(path.endsWith('/a') ? 'a' : 'b'), observedAddress: path.endsWith('/a') ? 'address-a' : 'address-b' }
+  })
+  vi.mocked(sendMessage).mockImplementation((p, signal, emit, remember) => {
+    remember(`run-${p.conversationId}`)
+    emit({ event: 'message.delta', data: { runId: `run-${p.conversationId}`, text: `${p.conversationId}-first` } })
+    return new Promise((finish) => { streams.set(p.conversationId, { emit, finish, signal }) })
+  })
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.open('a'); await result.current.send('Ask A') })
+  expect(result.current.busy).toBe(true)
+  await act(async () => { await result.current.open('b') })
+  expect(result.current.busy).toBe(false)
+  expect(result.current.pending).toBeNull()
+  expect(result.current.messages.map((m) => m.text)).toEqual(['b'])
+  await act(async () => { expect(await result.current.send('Ask B')).toBe(true) })
+  expect(result.current.busy).toBe(true)
+  expect(sendMessage).toHaveBeenCalledTimes(2)
+  expect(JSON.parse(sessionStorage.getItem('noodo:pending:u:all')!).map((p: { conversationId: string }) => p.conversationId)).toEqual(['a', 'b'])
+  act(() => {
+    streams.get('a')!.emit({ event: 'message.delta', data: { runId: 'run-a', text: '-background' } })
+    streams.get('a')!.emit({ event: 'tool.started', data: { runId: 'run-a', toolCallId: 'tool-a', name: 'get_market_overview' } })
+  })
+  expect(result.current.messages.at(-1)?.text).toBe('b-first')
+  expect(result.current.tools).toEqual([])
+  await act(async () => { await result.current.open('a') })
+  expect(result.current.messages.at(-1)?.text).toBe('a-first-background')
+  expect(result.current.messages.at(-1)?.observedAddress).toBe('address-a')
+  expect(result.current.tools[0].id).toBe('tool-a')
+  expect(pollRun).not.toHaveBeenCalled()
+  await act(async () => {
+    const run = saved('run-b')
+    run.result!.text = 'B completed'
+    run.observedAddress = 'resolved-b'
+    run.addressVersion = 2
+    streams.get('b')!.finish(run)
+  })
+  expect(result.current.busy).toBe(true)
+  expect(result.current.conversation?.observedAddress).toBe('address-a')
+  expect(result.current.pending?.conversationId).toBe('a')
+  expect(JSON.parse(sessionStorage.getItem('noodo:pending:u:all')!)).toHaveLength(1)
+  await act(async () => { streams.get('a')!.finish(saved('run-a')) })
+  await waitFor(() => expect(result.current.executionBusy).toBe(false))
+  expect(sessionStorage.getItem('noodo:pending:u:all')).toBeNull()
+})
+
+it('stops only the selected conversation and leaves another response running', async () => {
+  const streams = new Map<string, { signal: AbortSignal; finish: (run: Run) => void }>()
+  vi.mocked(request).mockImplementation(async (path) => path === '/conversations'
+    ? { conversations: [] } : history(path.split('/').at(-1)))
+  vi.mocked(sendMessage).mockImplementation((p, signal) => new Promise((finish, reject) => {
+    streams.set(p.conversationId, { signal, finish })
+    signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true })
+  }))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.open('a'); await result.current.send('Ask A') })
+  await act(async () => { await result.current.open('b'); await result.current.send('Ask B') })
+  await act(async () => { result.current.cancel() })
+  expect(streams.get('b')!.signal.aborted).toBe(true)
+  expect(streams.get('a')!.signal.aborted).toBe(false)
+  expect(result.current.busy).toBe(false)
+  expect(result.current.executionBusy).toBe(true)
+  expect(result.current.error).toContain('Response stopped')
+  await act(async () => { await result.current.open('a') })
+  expect(result.current.error).toBe('')
+  expect(result.current.busy).toBe(true)
+  await act(async () => { streams.get('a')!.finish(saved('run-a')) })
+  expect(result.current.executionBusy).toBe(false)
+  expect(JSON.parse(sessionStorage.getItem('noodo:pending:u:all')!)[0].conversationId).toBe('b')
+})
+
+it('restores every saved conversation run without another POST', async () => {
+  const pending = ['a', 'b'].map((id) => ({ conversationId: id, clientRequestId: `request-${id}`, text: id, expectedAddressVersion: 1, createdAt: Date.now(), runId: `run-${id}` }))
+  sessionStorage.setItem('noodo:pending:u:all', JSON.stringify(pending))
+  sessionStorage.setItem('noodo:selected:u', 'b')
+  vi.mocked(request).mockImplementation(async (path) => path === '/conversations' ? { conversations: [] } : { ...history(path.split('/').at(-1)), messages: history(path.split('/').at(-1)).messages.map((m) => ({ ...m, runId: `run-${path.split('/').at(-1)}` })) })
+  const completions = new Map<string, (run: Run) => void>()
+  vi.mocked(pollRun).mockImplementation((id) => new Promise((finish) => { completions.set(id, finish) }))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(pollRun).toHaveBeenCalledTimes(2))
+  expect(result.current.conversation?.id).toBe('b')
+  expect(sendMessage).not.toHaveBeenCalled()
+  await act(async () => { completions.get('run-a')!(saved('run-a')) })
+  expect(result.current.busy).toBe(true)
+  expect(result.current.messages.map((m) => m.text)).toEqual(['b'])
+  await act(async () => { completions.get('run-b')!(saved('run-b')) })
+  expect(result.current.busy).toBe(false)
+  expect(result.current.messages.at(-1)?.text).toBe('saved')
+  expect(sessionStorage.getItem('noodo:pending:u:all')).toBeNull()
+})
+
+it('creates a new chat while another chat responds and adds it to navigation immediately', async () => {
+  const completions = new Map<string, (run: Run) => void>()
+  vi.mocked(request).mockImplementation(async (path, init) => {
+    if (path === '/conversations') return init?.method === 'POST'
+      ? { ...conversation, id: 'new', title: 'New chat' } : { conversations: [conversation] }
+    return history(path.split('/').at(-1))
+  })
+  vi.mocked(sendMessage).mockImplementation((p) => new Promise((finish) => { completions.set(p.conversationId, finish) }))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.open('c'); await result.current.send('First chat') })
+  act(() => { result.current.newChat() })
+  expect(result.current.conversation).toBeNull()
+  expect(result.current.busy).toBe(false)
+  expect(result.current.pending).toBeNull()
+  await act(async () => { expect(await result.current.send('New chat question')).toBe(true) })
+  expect(result.current.conversation?.id).toBe('new')
+  expect(result.current.conversations.some((c) => c.id === 'new')).toBe(true)
+  expect(completions.size).toBe(2)
+  await act(async () => { completions.get('c')!(saved('run-c')); completions.get('new')!(saved('run-new')) })
+})
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((finish) => { resolve = finish })
+  return { promise, resolve }
+}
+
+it('keeps New chat and conversation drafts independently, including repeated New chat clicks', async () => {
+  vi.mocked(request).mockImplementation(async (path) => path === '/conversations' ? { conversations: [] } : history(path.split('/').at(-1)))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  act(() => { result.current.setInput('new draft'); result.current.newChat(); result.current.newChat() })
+  expect(result.current.input).toBe('new draft')
+  await act(async () => { await result.current.open('a') })
+  expect(result.current.input).toBe('')
+  act(() => result.current.setInput('A draft'))
+  await act(async () => { await result.current.open('b') })
+  act(() => result.current.setInput('B draft'))
+  act(() => result.current.newChat())
+  expect(result.current.input).toBe('new draft')
+  await act(async () => { await result.current.open('a') })
+  expect(result.current.input).toBe('A draft')
+  await act(async () => { await result.current.open('b') })
+  expect(result.current.input).toBe('B draft')
+})
+
+it.each([false, true])('transfers a sent draft into its created chat without clearing another view (switch=%s)', async (switchView) => {
+  const creation = deferred<typeof conversation>()
+  vi.mocked(request).mockImplementation(async (path, init) => path === '/conversations'
+    ? init?.method === 'POST' ? creation.promise : { conversations: [] } : history('other'))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  act(() => result.current.setInput('First question'))
+  let sending!: Promise<boolean>
+  act(() => { sending = result.current.send(result.current.input) })
+  expect(result.current.creating).toBe(true)
+  if (switchView) {
+    await act(async () => { await result.current.open('other') })
+    act(() => result.current.setInput('Other draft'))
+  }
+  await act(async () => { creation.resolve(conversation); expect(await sending).toBe(true) })
+  expect(result.current.selectedId).toBe(switchView ? 'other' : 'c')
+  expect(result.current.input).toBe(switchView ? 'Other draft' : '')
+  expect(vi.mocked(sendMessage).mock.calls[0][0].text).toBe('First question')
+  await act(async () => { await result.current.open('c') })
+  expect(result.current.messages[0].text).toBe('First question')
+  act(() => result.current.newChat())
+  expect(result.current.input).toBe('')
+})
+
+it('does not let a slow startup list or background recovery take selection back from New chat', async () => {
+  const list = deferred<{ conversations: typeof conversation[] }>()
+  const oldHistory = deferred<History>()
+  const completion = deferred<Run>()
+  sessionStorage.setItem('noodo:pending:u', JSON.stringify({ conversationId: 'c', clientRequestId: 'original', text: 'question', expectedAddressVersion: 1, createdAt: Date.now(), runId: 'r' }))
+  vi.mocked(request).mockImplementation(async (path) => path === '/conversations' ? list.promise : oldHistory.promise)
+  vi.mocked(pollRun).mockReturnValue(completion.promise)
+  const { result } = renderHook(() => useAssistant('u'))
+  act(() => { result.current.newChat(); result.current.setInput('My new draft') })
+  await act(async () => { list.resolve({ conversations: [conversation] }); oldHistory.resolve(history()) })
+  await waitFor(() => expect(pollRun).toHaveBeenCalledTimes(1))
+  expect(result.current.selectedId).toBeNull()
+  expect(result.current.input).toBe('My new draft')
+  await act(async () => { completion.resolve(saved()) })
+  expect(result.current.selectedId).toBeNull()
+  expect(result.current.input).toBe('My new draft')
+  expect(sendMessage).not.toHaveBeenCalled()
+})
+
+it('reuses an uncertain request after refresh and gives explicit retry a new ID without clearing its draft', async () => {
+  const original = { conversationId: 'c', clientRequestId: 'original', text: 'question', expectedAddressVersion: 1, createdAt: Date.now() }
+  sessionStorage.setItem('noodo:pending:u', JSON.stringify(original))
+  vi.mocked(sendMessage).mockResolvedValue({ ...saved(), status: 'failed', error: { code: 'failed', message: 'Failed', retryable: true } })
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.pending).toBeNull())
+  expect(vi.mocked(sendMessage).mock.calls[0][0]).toEqual(original)
+  act(() => result.current.setInput('Unsent follow-up'))
+  act(() => result.current.retry())
+  await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(2))
+  expect(vi.mocked(sendMessage).mock.calls[1][0].clientRequestId).not.toBe('original')
+  expect(vi.mocked(sendMessage).mock.calls[1][0].text).toBe('question')
+  expect(result.current.input).toBe('Unsent follow-up')
+})
+
+it('deduplicates startup and manual recovery while history is outstanding, and ignores an old page after recovery', async () => {
+  const startup = deferred<History>()
+  const older = deferred<History>()
+  const completion = deferred<Run>()
+  const pending = { conversationId: 'c', clientRequestId: 'original', text: 'question', expectedAddressVersion: 1, createdAt: Date.now(), runId: 'r' }
+  sessionStorage.setItem('noodo:pending:u', JSON.stringify(pending))
+  vi.mocked(request).mockImplementation(async (path) => path === '/conversations' ? { conversations: [] }
+    : path.includes('?cursor=') ? older.promise : startup.promise)
+  vi.mocked(pollRun).mockRejectedValueOnce(new Error('offline')).mockRejectedValueOnce(new Error('still offline')).mockImplementation(() => completion.promise)
+  const { result } = renderHook(() => useAssistant('u'))
+  await act(async () => { result.current.recover(); await Promise.resolve() })
+  let opening!: Promise<void>
+  act(() => { opening = result.current.open('c'); result.current.recover() })
+  await act(async () => { startup.resolve(history('c', 'question', 'older')); await opening })
+  await waitFor(() => expect(result.current.busy).toBe(false))
+  expect(pollRun).toHaveBeenCalledTimes(2)
+  let loadingOlder!: Promise<void>
+  act(() => { loadingOlder = result.current.loadOlder(); result.current.recover(); result.current.recover() })
+  await waitFor(() => expect(pollRun).toHaveBeenCalledTimes(3))
+  await act(async () => { completion.resolve({ ...saved(), addressVersion: 3, observedAddress: 'resolved-new' }) })
+  await waitFor(() => expect(result.current.pending).toBeNull())
+  await act(async () => { older.resolve(history('c', 'stale', 'stale-cursor')); await loadingOlder })
+  expect(result.current.messages.at(-1)?.text).toBe('saved')
+  expect(result.current.messages.some((m) => m.text === 'stale')).toBe(false)
+  expect(result.current.conversation?.addressVersion).toBe(3)
+  expect(result.current.cursor).toBe('older')
+  act(() => result.current.newChat())
+  await act(async () => { await result.current.open('c') })
+  expect(pollRun).toHaveBeenCalledTimes(3)
+  expect(sendMessage).not.toHaveBeenCalled()
+})
+
+it('settles execution even when navigation refresh is unavailable, and opening a failed Pending never recovers it', async () => {
+  vi.mocked(sendMessage).mockRejectedValue(new Error('connection lost'))
+  const { result } = renderHook(() => useAssistant('u'))
+  await waitFor(() => expect(result.current.loading).toBe(false))
+  await act(async () => { await result.current.send('first') })
+  await waitFor(() => expect(result.current.busy).toBe(false))
+  const original = result.current.pending?.clientRequestId
+  act(() => result.current.newChat())
+  await act(async () => { await result.current.open('c') })
+  expect(sendMessage).toHaveBeenCalledTimes(1)
+  expect(pollRun).not.toHaveBeenCalled()
+  expect(result.current.pending?.clientRequestId).toBe(original)
+  vi.mocked(sendMessage).mockResolvedValue(saved())
+  vi.mocked(request).mockImplementation(async (path) => {
+    if (path === '/conversations') throw new Error('list offline')
+    return history()
+  })
+  await act(async () => { result.current.recover() })
+  await waitFor(() => expect(result.current.busy).toBe(false))
+  expect(result.current.pending).toBeNull()
+  expect(result.current.messages.at(-1)?.text).toBe('saved')
+  expect(result.current.error).toBe('')
+  expect(pollRun).not.toHaveBeenCalled()
+})

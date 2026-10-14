@@ -200,6 +200,9 @@
   transition: opacity 180ms ease-out;
 }
 .sidebar.expanded .recent-chat-row { transition-delay: 90ms, 0s, 0s; }
+.recent-chat-row.active { color: var(--text-strong); }
+.recent-chat-row.active::before { opacity: 1; }
+.recent-chat-open:focus-visible { outline: 1px solid var(--text-muted); outline-offset: -1px; border-radius: inherit; }
 .recent-chat-row:hover, .recent-chat-row:focus-within { color: var(--text); }
 .recent-chat-row:hover::before, .recent-chat-row:focus-within::before { opacity: 1; }
 .recent-chat-open, .recent-chat-delete {

@@ -17,13 +17,18 @@ Vite proxies `/v1` to `http://127.0.0.1:3001`, preserves Origin and cookies, and
 
 The app supports sign-in, structured history, account selection with version checks, tool progress, streamed explanations, and market, position, fill, and source cards. Unknown values stay unknown; amounts retain decimal precision. Farm navigation and the resizable right panel remain available. Unimplemented modes, attachments, and mock recent chats are hidden.
 
-Before submitting a message, the app saves its request ID and payload in user-scoped session storage. Responses use either SSE or duplicate-request JSON, selected by Content-Type. Stream parsing handles split UTF-8 characters and event boundaries. After a disconnect, the app retrieves the saved run. An uncertain submission reuses its original ID; an explicit retry creates a new ID. Expired or malformed pending requests are not replayed. Partial answers remain marked as incomplete.
+Conversation selection only changes the displayed view. Each conversation keeps its own messages, progress, errors, execution state, and unsent input; background conversations continue generating while you switch. The first visit loads uncached history, and stale responses cannot replace newer execution results or account versions.
+
+New chat selects a separate unsent draft. Repeated clicks preserve it, and switching away and back preserves each view's input for the current page lifetime. Sending the draft creates a conversation with that first message and prepares a fresh empty draft. If you switch during creation, the new conversation is added to navigation without taking selection back or clearing the other view's input. Drafts are not saved across page reloads.
+
+Before submitting a message, the app saves its request ID and payload in user-scoped session storage. Responses use either SSE or duplicate-request JSON, selected by Content-Type. Stream parsing handles split UTF-8 characters and event boundaries. On page startup, the app independently restores all valid saved pending requests without changing a later user selection. Switching conversations never submits or recovers a request. After a disconnect, the app retrieves the saved run; failed recovery remains available through Recover saved request. An uncertain submission reuses its original ID; an explicit retry creates a new ID. Expired or malformed pending requests are not replayed. Partial answers remain marked as incomplete.
 
 ## Structure
 
 - `src/app`: page composition and top-level coordination.
 - `src/features`: components, hooks, data, and types grouped by feature.
-- `src/features/assistant/hooks/useAssistant.ts`: conversation selection, history, and account changes.
+- `src/features/assistant/hooks/useAssistant.ts`: view selection, per-view drafts, pending storage, startup recovery, and submission coordination.
+- `src/features/assistant/hooks/useConversationState.ts`: per-conversation history cache, pagination, data revisions, and account-version protection.
 - `src/features/assistant/hooks/useRunExecution.ts`: streaming, cancellation, and saved-run recovery.
 - `src/shared`: code with established cross-feature reuse.
 - `src/styles.css`: ordered stylesheet imports; keep their order when moving rules.
@@ -39,4 +44,4 @@ npm test
 npm run build
 ```
 
-Tests cover SSE framing and multibyte UTF-8, duplicate requests, decimal display, consecutive messages, recovery, expired and malformed pending requests, and stale history responses. Live Claude evaluation and full browser integration remain separate checks; see the [service acceptance checklist](../noodo-service/docs/acceptance.md).
+Tests cover independent concurrent runs, per-view drafts, creation and startup navigation races, stale history/account revisions, request identity on recovery and retry, SSE framing and multibyte UTF-8, duplicate requests, decimal display, consecutive messages, recovery, expired and malformed pending requests, and stale history responses. Live Claude evaluation and full browser integration remain separate checks; see the [service acceptance checklist](../noodo-service/docs/acceptance.md).

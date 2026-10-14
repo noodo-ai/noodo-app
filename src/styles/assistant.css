@@ -6,7 +6,8 @@
 .login-form label { display: grid; gap: 8px; font-size: 13px; color: var(--text-muted); }
 .login-form input { min-width: 0; width: 100%; height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-item); background: var(--surface); color: var(--text); }
 .primary-action { padding: 11px 18px; border: 1px solid var(--line); border-radius: var(--radius-item); background: var(--text-strong); color: var(--surface); cursor: pointer; font: inherit; font-size: 13px; }
-button:disabled { cursor: default; opacity: .45; }
+button:disabled { cursor: default; }
+.primary-action:disabled, .text-action:disabled, .send-button:disabled, .assistant-examples button:disabled { opacity: .45; }
 .scope-note { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .text-action { padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--text); background: transparent; cursor: pointer; font-size: 12px; }
 .assistant-surface { display: flex; flex-direction: column; min-width: 0; }
@@ -19,7 +20,7 @@ button:disabled { cursor: default; opacity: .45; }
 .assistant-chat .chat-composer { position: static; transform: none; width: min(820px, calc(100% - 48px)); margin: 0 auto 18px; flex-shrink: 0; }
 .assistant-chat .assistant-message { max-width: 100%; }
 .assistant-body { min-width: 0; flex: 1; }
-.assistant-text { overflow-wrap: anywhere; font-size: 14px; line-height: 1.75; }
+.assistant-text { color: var(--text); overflow-wrap: anywhere; font-size: 14px; line-height: 1.75; }
 .assistant-text > :first-child { margin-top: 0; }
 .assistant-text > :last-child { margin-bottom: 0; }
 .assistant-text p { margin: 10px 0; color: inherit; font-size: inherit; line-height: inherit; }
@@ -125,4 +126,3 @@ details[open] > .response-progress-toggle svg { transform: rotate(0); }
 .response-section .data-cards { margin-top: 12px; }
 .response-section .data-cards:empty { display: none; }
 .response-phase { display: block; margin-bottom: 6px; font-size: 11px; color: var(--text-faint); }
-.response-explanation .assistant-text { color: var(--text-muted); }

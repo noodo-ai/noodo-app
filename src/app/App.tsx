@@ -54,16 +54,14 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
     '--sidebar-gutter': `${sidebar.width + 6}px`,
   } as CSSProperties
   const composerProps = {
-    value: composer.input,
-    onChange: composer.setInput,
+    value: chat.input,
+    onChange: chat.setInput,
     onSubmit: () => {
-      void chat.send(composer.input).then((sent) => {
-        if (sent) composer.setInput('')
-      })
+      void chat.send(chat.input)
     },
     mode: composer.mode,
     onModeChange: composer.setMode,
-    disabled: !!chat.pending || chat.loading,
+    disabled: !!chat.pending || chat.loading || chat.creating,
     busy: chat.busy,
     onCancel: chat.cancel,
   }
@@ -78,16 +76,14 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
         preview={sidebar.preview}
         onPreviewChange={sidebar.setPreview}
         onToggle={toggleSidebar}
-        onReset={() => {
-          chat.reset()
-          composer.setInput('')
-        }}
+        onNewChat={chat.newChat}
         onOpenRecentChat={(id) => {
           void chat.open(id)
         }}
         chats={chat.conversations}
+        activeConversationId={chat.selectedId}
         user={user}
-        busy={chat.busy || !!chat.pending || chat.loading}
+        busy={chat.executionBusy || !!chat.pending || chat.loading}
         onLogout={onLogout}
         activePanel={panel.open ? panel.view : null}
         onSelectPanel={(view) => panel.select(view, appShellWidth())}
@@ -126,19 +122,22 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
           <div className="assistant-toolbar">
             <button
               className="text-action mobile-signout"
-              disabled={chat.busy}
+              disabled={chat.executionBusy}
               onClick={onLogout}
             >
               Sign out
             </button>
           </div>
-          {chat.error && (
-            <div className="assistant-error" role="alert">
-              <span>{chat.error}</span>
+          {chat.listError && (
+            <p className="scope-note" role="status">Recent chats unavailable: {chat.listError}</p>
+          )}
+          {(chat.error || (chat.pending && !chat.busy)) && (
+            <div className="assistant-error" role={chat.error ? 'alert' : 'status'}>
+              <span>{chat.error || 'A saved request needs recovery before you can send another message.'}</span>
               {chat.pending ? (
                 <button
                   className="text-action"
-                  disabled={chat.busy}
+                  disabled={chat.busy || chat.loading}
                   onClick={chat.recover}
                 >
                   Recover saved request
@@ -153,6 +152,9 @@ function Workspace({ user, onLogout }: { user: User; onLogout: () => void }) {
                 </button>
               ) : null}
             </div>
+          )}
+          {chat.creating && (
+            <p className="scope-note" role="status">Creating conversation…</p>
           )}
           {chat.loading && (
             <p className="scope-note" role="status">

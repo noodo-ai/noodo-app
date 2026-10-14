@@ -3,8 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type Dispatch,
-  type SetStateAction,
   type RefObject,
 } from 'react'
 import { ApiFailure, pollRun, sendMessage } from '../api'
@@ -12,38 +10,42 @@ import { updateProgress, updateTools } from '../progress'
 import type { ChatMessage, Pending, Run, ToolStatus } from '../types'
 
 interface RunExecutionOptions {
-  observedAddress: string | null
-  resolveAddress: (address: string | null, version: number) => void
+  getObservedAddress: (conversationId: string) => string | null
+  resolveAddress: (conversationId: string, address: string | null, version: number) => void
   mounted: RefObject<boolean>
-  setMessages: Dispatch<SetStateAction<ChatMessage[]>>
-  setError: Dispatch<SetStateAction<string>>
-  savePending: (value: Pending | null) => void
+  updateMessages: (conversationId: string, update: (current: ChatMessage[]) => ChatMessage[]) => void
+  updateError: (conversationId: string, error: string) => void
+  savePending: (conversationId: string, value: Pending | null) => void
+  invalidate: (conversationId: string) => void
   refresh: () => Promise<void>
 }
 
 export function useRunExecution({
-  observedAddress,
+  getObservedAddress,
   resolveAddress,
   mounted,
-  setMessages,
-  setError,
+  updateMessages,
+  updateError,
   savePending,
   refresh,
+  invalidate,
 }: RunExecutionOptions) {
-  const [busy, setBusy] = useState(false)
-  const [tools, setTools] = useState<ToolStatus[]>([])
-  const busyRef = useRef(false)
-  const abortRef = useRef<AbortController | null>(null)
-  useEffect(
-    () => () => {
-      abortRef.current?.abort()
-    },
-    [],
-  )
+  const [states, setStates] = useState<Record<string, { busy: boolean; tools: ToolStatus[] }>>({})
+  const controllers = useRef(new Map<string, AbortController>())
+  const isRunning = useCallback((id: string) => controllers.current.has(id), [])
+  const cancel = useCallback((id: string) => controllers.current.get(id)?.abort(), [])
+  const updateToolsFor = useCallback((id: string, update: (current: ToolStatus[]) => ToolStatus[]) => {
+    setStates((current) => ({ ...current, [id]: { busy: current[id]?.busy ?? false, tools: update(current[id]?.tools ?? []) } }))
+  }, [])
+  useEffect(() => {
+    const active = controllers.current
+    return () => { for (const controller of active.values()) controller.abort() }
+  }, [])
   const applyRun = useCallback(
-    (run: Run) => {
-      resolveAddress(run.observedAddress, run.addressVersion)
-      setMessages((current) => {
+    (conversationId: string, run: Run) => {
+      if (!mounted.current) return
+      resolveAddress(conversationId, run.observedAddress, run.addressVersion)
+      updateMessages(conversationId, (current) => {
         const final: ChatMessage = {
           id: `assistant:${run.id}`,
           runId: run.id,
@@ -68,7 +70,7 @@ export function useRunExecution({
           ? [...current, final]
           : current.map((m, i) => (i === existing ? final : m))
       })
-      setTools(
+      updateToolsFor(conversationId, () =>
         (run.result?.activity ?? [])
           .filter((a) => a.type === 'tool')
           .map((a) => ({
@@ -78,35 +80,53 @@ export function useRunExecution({
             warnings: [],
           })),
       )
-      if (run.error) setError(run.error.message)
+      updateError(conversationId, run.error?.message ?? '')
     },
-    [setMessages, setError, resolveAddress],
+    [mounted, updateMessages, updateError, resolveAddress, updateToolsFor],
   )
   const execute = useCallback(
     async (value: Pending, recoverOnly = false) => {
-      if (busyRef.current || !mounted.current) return
-      busyRef.current = true
-      setBusy(true)
-      setError('')
-      setTools([])
+      const id = value.conversationId
+      if (controllers.current.has(id) || !mounted.current) return
+      invalidate(id)
       const abort = new AbortController()
-      abortRef.current = abort
+      controllers.current.set(id, abort)
+      setStates((current) => ({ ...current, [id]: { busy: true, tools: [] } }))
+      updateError(id, '')
       let known = value
-      savePending(value)
-      const remember = (id: string) => {
-        known = { ...known, runId: id }
-        savePending(known)
+      savePending(id, value)
+      if (value.text) updateMessages(id, (current) => {
+        const exists = current.some((m) => m.role === 'user' && (
+          m.id === value.clientRequestId || (value.runId && m.runId === value.runId)
+        ))
+        return exists ? current : [...current, {
+          id: value.clientRequestId, runId: value.runId ?? 'pending', role: 'user',
+          text: value.text, textStatus: 'final', observedAddress: getObservedAddress(id),
+          addressVersion: value.expectedAddressVersion, createdAt: value.createdAt,
+        }]
+      })
+      const remember = (runId: string) => {
+        if (known.runId === runId) return
+        known = { ...known, runId }
+        updateMessages(id, (current) => {
+          const persistedUser = current.some((message) => message.role === 'user' && message.runId === runId && message.id !== value.clientRequestId)
+          return current.flatMap((message) => message.id === value.clientRequestId
+            ? persistedUser ? [] : [{ ...message, runId }]
+            : [message])
+        })
+        savePending(id, known)
       }
       try {
         const run =
           recoverOnly && value.runId
-            ? await pollRun(value.runId, abort.signal, applyRun)
+            ? await pollRun(value.runId, abort.signal, (run) => applyRun(value.conversationId, run))
             : await sendMessage(
                 value,
                 abort.signal,
                 (event) => {
+                  if (!mounted.current) return
                   if (event.event.startsWith('tool.'))
-                    setTools((current) => updateTools(current, event))
+                    updateToolsFor(id, (current) => updateTools(current, event))
                   if (
                     [
                       'message.delta',
@@ -116,7 +136,7 @@ export function useRunExecution({
                       'tool.completed',
                     ].includes(event.event)
                   )
-                    setMessages((current) => {
+                    updateMessages(value.conversationId, (current) => {
                       const existing = current.find(
                         (m) =>
                           m.role === 'assistant' &&
@@ -128,7 +148,7 @@ export function useRunExecution({
                           id: `assistant:${event.data.runId}`,
                           runId: event.data.runId,
                           role: 'assistant',
-                          observedAddress: observedAddress,
+                          observedAddress: getObservedAddress(id),
                           addressVersion: value.expectedAddressVersion,
                           createdAt: Date.now(),
                           startedAt: value.createdAt,
@@ -145,47 +165,49 @@ export function useRunExecution({
                 remember,
               )
         if (!mounted.current) return
-        applyRun(run)
-        savePending(null)
-        await refresh()
+        applyRun(value.conversationId, run)
+        savePending(id, null)
+        void refresh().catch(() => { /* Navigation refresh does not change a settled run. */ })
       } catch (e) {
         if (!mounted.current) return
-        setError(
+        updateError(
+          value.conversationId,
           abort.signal.aborted
             ? 'Response stopped. Recover saved results before retrying.'
             : e instanceof Error
               ? e.message
               : 'Connection failed',
         )
-        if (e instanceof ApiFailure && e.status < 500) savePending(null)
+        if (e instanceof ApiFailure && e.status < 500) savePending(id, null)
         else if (known.runId) {
           try {
             const recovery = new AbortController()
-            abortRef.current = recovery
-            const run = await pollRun(known.runId, recovery.signal, applyRun)
+            controllers.current.set(id, recovery)
+            const run = await pollRun(known.runId, recovery.signal, (run) => applyRun(value.conversationId, run))
             if (!mounted.current) return
-            applyRun(run)
-            savePending(null)
-            await refresh()
+            applyRun(value.conversationId, run)
+            savePending(id, null)
+            void refresh().catch(() => { /* Navigation refresh does not change a settled run. */ })
           } catch {
             /* keep durable ID for manual recovery */
           }
         }
       } finally {
-        busyRef.current = false
-        setBusy(false)
-        abortRef.current = null
+        controllers.current.delete(id)
+        if (mounted.current) setStates((current) => ({ ...current, [id]: { busy: false, tools: current[id]?.tools ?? [] } }))
       }
     },
     [
       applyRun,
-      observedAddress,
+      invalidate,
+      getObservedAddress,
       refresh,
       savePending,
       mounted,
-      setMessages,
-      setError,
+      updateMessages,
+      updateError,
+      updateToolsFor,
     ],
   )
-  return { busy, setBusy, busyRef, abortRef, tools, setTools, execute }
+  return { states, isRunning, cancel, execute }
 }

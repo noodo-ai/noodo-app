@@ -15,7 +15,14 @@ export function hydrate(history: History): ChatMessage[] {
 
 export function readPending(key: string): Pending | null {
   try {
-    const saved: unknown = JSON.parse(sessionStorage.getItem(key) ?? 'null')
+    return parsePending(JSON.parse(sessionStorage.getItem(key) ?? 'null'))
+  } catch {
+    return null
+  }
+}
+
+function parsePending(saved: unknown): Pending | null {
+  try {
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return null
     const value = saved as Record<string, unknown>
     if (
@@ -47,4 +54,18 @@ export function readPending(key: string): Pending | null {
   } catch {
     return null
   }
+}
+
+export function readPendingRequests(key: string): Record<string, Pending> {
+  try {
+    const saved: unknown = JSON.parse(sessionStorage.getItem(`${key}:all`) ?? 'null')
+    if (Array.isArray(saved)) {
+      return Object.fromEntries(saved.flatMap((item) => {
+        const value = parsePending(item)
+        return value ? [[value.conversationId, value]] : []
+      }))
+    }
+  } catch { /* recover the legacy single request below */ }
+  const legacy = readPending(key)
+  return legacy ? { [legacy.conversationId]: legacy } : {}
 }
