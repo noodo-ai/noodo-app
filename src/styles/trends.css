@@ -1,0 +1,65 @@
+.trends { container-type: inline-size; min-width: 0; font-size: 12px; line-height: 1.6; }
+.trend-intro { margin: 0 0 16px; color: var(--text-muted); font-size: 12px; font-weight: 400; line-height: 1.75; text-wrap: pretty; }
+.trend-intro > span { color: var(--text); font-weight: 500; white-space: nowrap; }
+.trend-caption { margin: 6px 0 12px; color: var(--text-faint); font-size: 11px; }
+.trend-status { display: grid; gap: 2px; padding: 0 0 8px; color: var(--text-muted); font-size: 11px; }
+.trend-observed { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.trend-observed > span { min-width: 0; }
+.trend-refresh { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-faint); cursor: pointer; transition: background var(--ease), color var(--ease); }
+.trend-refresh:hover, .trend-refresh:focus-visible { color: var(--text); background: var(--hover); }
+.trend-refresh:focus-visible { outline: 1px solid var(--text-muted); outline-offset: 2px; }
+.trend-highlight-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.trend-highlight-heading h3 { min-width: 0; }
+.trend-highlight-heading svg { flex-shrink: 0; color: var(--text-muted); }
+.trend-period { flex-shrink: 0; color: var(--text-muted); font-size: 10px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+.trend-highlights { display: grid; gap: 10px; margin: 8px 0 12px; }
+.trend-highlight { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-item); }
+.trend-highlight h3 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 12px; font-weight: 500; }
+.trend-highlight dl { display: grid; gap: 7px; margin: 12px 0 0; }
+.trend-highlight dl > div { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.trend-highlight dt { min-width: 0; overflow-wrap: anywhere; color: var(--text-muted); }
+.trend-highlight dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.trend-highlight-interest dl > div { align-items: center; }
+.trend-highlight-interest dt { color: var(--text); font-weight: 500; }
+.trend-interest-value { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 2px 7px; border-radius: 6px; background: var(--hover); font-size: 12px; }
+.trend-interest-value svg { flex-shrink: 0; color: var(--text-muted); }
+.trend-interest-current { display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; column-gap: 5px; font-size: 12px; }
+.trend-interest-current > span { color: var(--text-faint); font-size: 10px; }
+.trend-interest-empty { display: grid; gap: 4px; margin-top: 12px; }
+.trend-interest-empty > span { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.trend-interest-empty > p { margin: 0; color: var(--text-faint); font-size: 11px; line-height: 1.6; }
+
+.trend-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.trend-section-heading h3 { margin: 0; font-size: 13px; font-weight: 500; }
+.trend-section-heading > span { color: var(--text-faint); font-size: 11px; }
+.trend-leaderboard { margin-top: 24px; }
+.trend-leaderboard ol, .trend-feed ol { list-style: none; margin: 12px 0; padding: 0; }
+.trend-leaderboard li { display: grid; grid-template-columns: 16px minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.trend-rank { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.trends a { display: inline-flex; align-items: center; gap: 3px; color: var(--text-muted); text-decoration: none; }
+.trends a:hover, .trends a:focus-visible { color: var(--text-strong); text-decoration: underline; }
+.trend-leaderboard a { min-width: 0; font-size: 11px; }
+.trend-leaderboard a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trend-leaderboard a svg { flex: 0 0 auto; }
+.trend-trader-values { display: grid; text-align: right; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.trend-trader-values strong { font-size: 12px; font-weight: 500; }
+.trend-trader-values > span { font-size: 10px; color: var(--text-faint); }
+.trend-feed { margin-top: 28px; }
+.trend-filters { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.trend-filters button { min-height: 36px; padding: 4px 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; }
+.trend-filters button[aria-pressed="true"] { background: var(--hover); color: var(--text); border-color: var(--line); }
+.trend-filters button:hover, .trend-filters button:focus-visible { background: var(--hover); color: var(--text); }
+.trend-feed li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.trend-event-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; color: var(--text-faint); font-size: 10px; }
+.trend-feed h4 { margin: 7px 0; font-size: 13px; font-weight: 500; overflow-wrap: anywhere; }
+.trend-feed article > p { margin: 0 0 10px; color: var(--text-muted); overflow-wrap: anywhere; }
+.trend-feed article > a { font-size: 11px; }
+.trend-feed details { margin-top: 10px; color: var(--text-faint); font-size: 10px; overflow-wrap: anywhere; }
+.trend-feed details p { margin: 6px 0; }
+.trend-empty { margin: 16px 0 4px; color: var(--text-faint); font-size: 12px; }
+.trend-notice { margin: 12px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--text-muted); font-size: 11px; }
+.trend-notice button { min-height: 36px; border: 0; background: transparent; color: var(--text); text-decoration: underline; cursor: pointer; }
+@container (min-width: 620px) { .trend-highlights { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+@media (pointer: coarse) { .trend-refresh { flex-basis: 36px; width: 36px; height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .trend-refresh { transition: none; } }

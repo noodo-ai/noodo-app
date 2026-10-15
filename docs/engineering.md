@@ -31,6 +31,14 @@ Trace the changed behavior through submission, streaming, duplicate responses, d
 
 For changes to API payloads, SSE events, request IDs, account versions, or recovery semantics, inspect the matching `noodo-service` producer and its tests when available. The service [design document](../../noodo-service/docs/crypto-ai-assistant-design.md) and [acceptance checklist](../../noodo-service/docs/acceptance.md) provide requirements and verification context when relevant. Record an unavailable counterpart or missing requirement as a review limitation.
 
+## Resource contract
+
+Resources are a separate feature from chat execution. Community is a view of public personal resources, not a duplicate store. Public resources require an authenticated session; private resources, mutations, and personal categories are owner-scoped. Enforce visibility at the service for metadata and every file request. Do not substitute frontend hiding for access control. Personal categories are not exposed to other users. Search and preview requests must discard stale responses and abort on navigation; release file preview object URLs on cleanup.
+
+## Trends contract
+
+Trends is independent of chat runs and model quotas. Its authenticated read endpoint returns stored scheduled observations, coverage, source IDs, timestamps, and per-source errors/staleness. `marketSource` and `interestBaseline` carry the current and hourly comparison snapshots' source IDs and timestamps, or null when unavailable, independently of feed events. Do not trigger provider requests from panel reads. Preserve unknown decimals, clear warm-up states, and distinguish sampled position changes from trades or market-wide coverage. Keep rule evaluation in the service; the app only formats values and filters the feed.
+
 ## Validation
 
 Use the configured scripts: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` for relevant source changes. Add focused regression tests for corrected behavior; avoid tests that merely repeat implementation details. For visual or interaction changes, verify affected states at desktop, tablet, and mobile widths, including transition and focus behavior.

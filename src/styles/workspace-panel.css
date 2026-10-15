@@ -204,6 +204,8 @@
 .panel-launch:hover kbd, .panel-launch:focus-visible kbd { color: var(--text-muted); }
 
 .right-panel-title { display: flex; align-items: center; gap: 8px; min-width: 0; padding-right: 36px; }
+.right-panel-label { display: inline-flex; align-items: center; gap: 7px; color: var(--text); white-space: nowrap; }
+.right-panel-label svg { flex-shrink: 0; }
 .right-panel-head:has(.right-panel-title) { padding-left: 6px; }
 .panel-launch-trends:hover svg, .panel-launch-trends:focus-visible svg { transform: scaleY(-1); }
 .panel-launch-resources:hover svg, .panel-launch-resources:focus-visible svg { animation: resources-rattle 360ms ease-in-out; }

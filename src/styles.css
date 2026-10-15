@@ -2,6 +2,8 @@
 @import "./styles/workspace.css";
 @import "./styles/navigation.css";
 @import "./styles/workspace-panel.css";
+@import "./styles/resources.css";
+@import "./styles/trends.css";
 @import "./styles/composer.css";
 @import "./styles/responsive.css";
 @import "./styles/assistant.css";

@@ -1,11 +1,8 @@
+import type { ApiError } from '../../shared/api'
+export type { ApiError } from '../../shared/api'
 export interface User {
   id: string
   username: string
-}
-export interface ApiError {
-  code: string
-  message: string
-  retryable: boolean
 }
 export interface Conversation {
   id: string

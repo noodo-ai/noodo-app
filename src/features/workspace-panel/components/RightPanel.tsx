@@ -1,12 +1,15 @@
+import { TrendsPanel } from '../../trends/components/TrendsPanel'
 import { useLayoutEffect, useRef, type Ref } from 'react'
 import { ArrowLeft, PanelRight, PanelRightClose } from 'lucide-react'
 import { PanelToggleButton } from '../../../shared/components/PanelToggleButton'
 import { panelViews } from '../data'
 import type { RightPanelView } from '../types'
 import { PanelOverview } from './PanelOverview'
+import { ResourcesPanel } from '../../resources/components/ResourcesPanel'
 
 export interface RightPanelProps {
   open: boolean
+  userId: string
   activeView: RightPanelView | null
   onSelect: (panel: RightPanelView) => void
   onBack: () => void
@@ -14,7 +17,7 @@ export interface RightPanelProps {
   closeButtonRef?: Ref<HTMLButtonElement>
 }
 
-export function RightPanel({ open, activeView, onSelect, onBack, onClose, closeButtonRef }: RightPanelProps) {
+export function RightPanel({ userId, open, activeView, onSelect, onBack, onClose, closeButtonRef }: RightPanelProps) {
   const panelRef = useRef<HTMLElement>(null)
   const previousView = useRef(activeView)
   useLayoutEffect(() => {
@@ -24,7 +27,8 @@ export function RightPanel({ open, activeView, onSelect, onBack, onClose, closeB
     }
     previousView.current = activeView
   }, [activeView, open])
-  const title = activeView ? panelViews.find((item) => item.id === activeView)?.label : 'Workspace'
+  const view = panelViews.find((item) => item.id === activeView)
+  const title = view?.label ?? 'Workspace'
 
   return (
     <aside ref={panelRef} className={`right-panel ${open ? 'open' : ''}`} aria-hidden={!open} inert={!open} aria-label={`${title} panel`}>
@@ -34,7 +38,10 @@ export function RightPanel({ open, activeView, onSelect, onBack, onClose, closeB
             <button type="button" className="right-panel-back frame-icon-button" aria-label="Back to workspace" onClick={onBack}>
               <ArrowLeft size={18} strokeWidth={1.6} />
             </button>
-            <span>{title}</span>
+            <span className="right-panel-label">
+              {view && <view.Icon size={15} strokeWidth={1.6} aria-hidden="true" />}
+              {title}
+            </span>
           </div>
         )}
         <PanelToggleButton
@@ -50,6 +57,8 @@ export function RightPanel({ open, activeView, onSelect, onBack, onClose, closeB
       </div>
       <div className={`right-panel-scroll ${activeView ? '' : 'overview'}`}>
         {!activeView && <PanelOverview enabled={open} onSelect={onSelect} />}
+        {activeView === 'trends' && <TrendsPanel key={userId} active={open} />}
+        {activeView === 'resources' && <ResourcesPanel userId={userId} active={open} />}
       </div>
     </aside>
   )

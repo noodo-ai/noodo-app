@@ -189,6 +189,7 @@ function Workspace({ user, onLogout, authError }: { user: User; onLogout: () => 
           toggleButtonRef={panelToggleRef}
         />
         <RightPanel
+          userId={user.id}
           closeButtonRef={panelCloseRef}
           open={panel.open}
           activeView={panel.view}
